@@ -6,13 +6,16 @@ import { PatternDivider } from "@/components/shared/PatternDivider";
 // NewsletterForm hidden until API integration is complete
 // import { NewsletterForm } from "@/components/home/NewsletterForm";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
-import { products as allProducts } from "@/lib/data";
+import { getFeaturedProducts } from "@/lib/api-client";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Fetch featured products from API
+  const featuredProducts = await getFeaturedProducts();
+
   return (
     <>
       <HeroSection />
-      <BentoGrid products={allProducts} />
+      <BentoGrid products={featuredProducts} />
       <StickyScrollReveal />
       <AnimatedTestimonials />
       <PatternDivider />
