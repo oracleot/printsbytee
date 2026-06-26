@@ -25,11 +25,13 @@
     "@printsbytee/shared": "file:../../packages/shared",
     "drizzle-orm": "^0.36.0",
     "hono": "^4.12.0",
+    "nodemailer": "^6.10.0",
     "pg": "^8.13.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.11.0",
     "drizzle-kit": "^0.28.0",
     "tsx": "^4.19.0",

@@ -48,7 +48,11 @@ const EnvSchema = z.object({
     .min(1, 'INTERNAL_API_KEY is required')
     .refine((v) => v.trim().length > 0, 'INTERNAL_API_KEY must not be blank'),
 
-  // Optional — used by POST /enquiries (issue #16).
+  // Optional — used by POST /enquiries (issue #16). `SMTP_USER` is
+  // used as both the SMTP auth user and the From address; most SMTP
+  // providers require the From to be a verified sender anyway, so a
+  // dedicated no-reply address can be added later by swapping in a
+  // second env var if needed.
   SMTP_HOST: optionalString,
   SMTP_PORT: optionalPositiveInt,
   SMTP_USER: optionalString,
