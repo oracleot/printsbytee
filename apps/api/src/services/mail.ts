@@ -87,7 +87,9 @@ export async function sendEnquiryNotification(
   const user = env.SMTP_USER as string;
   const pass = env.SMTP_PASS as string;
   const to = env.ENQUIRY_EMAIL as string;
-  const from = env.SMTP_FROM ?? user;
+  // Use SMTP_USER as the From address — most SMTP providers require
+  // the From to be a verified sender that matches the auth user.
+  const from = user;
 
   let transporter: Transporter;
   try {

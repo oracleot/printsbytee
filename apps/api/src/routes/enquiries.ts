@@ -29,10 +29,17 @@ export const enquiriesApp = new Hono();
  */
 enquiriesApp.post('/', async (c) => {
   // ── Validate request body ────────────────────────────────────────────────
+  // Hono throws a `SyntaxError` from `c.req.json()` when the body is
+  // not valid JSON. Surface that as a 400 with the same error envelope
+  // the schema-parse path uses so clients only have to handle one
+  // shape. Anything else (e.g. an upstream body-size limit) is re-thrown
+  // so the global handler sees it instead of being masked as a parse
+  // failure.
   let body: unknown;
   try {
     body = await c.req.json();
-  } catch {
+  } catch (err: unknown) {
+    if (!(err instanceof SyntaxError)) throw err;
     return c.json(
       ErrorResponseSchema.parse({
         error: {
@@ -81,7 +88,17 @@ enquiriesApp.post('/', async (c) => {
       })
       .returning();
 
-    row = EnquirySchema.parse(inserted);
+    // Drizzle returns `createdAt` as a JS `Date`, but `EnquirySchema`
+    // declares it as an ISO string (isoTimestampSchema). Serialise
+    // before validating so the parse doesn't reject our own insert —
+    // previously this throw surfaced the success path as 500 instead of
+    // 201. The same object is reused for the mail body so the operator
+    // sees the same timestamp in both the API response and the
+    // notification email.
+    row = EnquirySchema.parse({
+      ...inserted,
+      createdAt: inserted.createdAt.toISOString(),
+    });
   } catch (err: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pgCode = (err as any)?.code as string | undefined;
