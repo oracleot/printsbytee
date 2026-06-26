@@ -16,6 +16,7 @@
     "lint": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
     "upload:website-images": "tsx scripts/upload-website-images-to-r2.ts",
     "import:products": "tsx scripts/import-products-json.ts",
+    "create:owner": "tsx scripts/create-owner-user.ts",
     "db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "tsx node_modules/drizzle-kit/bin.cjs migrate"
   },
@@ -24,6 +25,7 @@
     "@aws-sdk/lib-storage": "^3.700.0",
     "@hono/node-server": "^1.19.0",
     "@printsbytee/shared": "file:../../packages/shared",
+    "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.36.0",
     "hono": "^4.12.0",
     "nodemailer": "^6.10.0",
@@ -31,6 +33,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.11.0",
