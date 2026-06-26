@@ -15,6 +15,7 @@
     "prelint": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "lint": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
     "upload:website-images": "tsx scripts/upload-website-images-to-r2.ts",
+    "import:products": "tsx scripts/import-products-json.ts",
     "db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "tsx node_modules/drizzle-kit/bin.cjs migrate"
   },
