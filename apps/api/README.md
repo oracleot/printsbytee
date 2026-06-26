@@ -17,8 +17,25 @@ This package is the Hono + TypeScript + Drizzle + Zod service that runs on Railw
 | `pnpm --filter @printsbytee/api start` | Run the compiled output (`node dist/index.js`). |
 | `pnpm --filter @printsbytee/api typecheck` | Type-check without emitting. |
 | `pnpm --filter @printsbytee/api lint` | Currently the same as `typecheck`; reserved for a real linter later. |
-| `pnpm --filter @printsbytee/api db:generate` | Placeholder for Drizzle migration generation (issue #10/#11). |
-| `pnpm --filter @printsbytee/api db:migrate` | Placeholder for Drizzle migration runner (issue #11). |
+| `pnpm --filter @printsbytee/api db:generate` | Generate a Drizzle migration from the schema under `src/db/schema/`. Re-running with no schema diff is a no-op. |
+| `pnpm --filter @printsbytee/api db:migrate` | Apply pending Drizzle migrations to `DATABASE_URL`. Idempotent — drizzle-kit records each applied migration in `drizzle.__drizzle_migrations` and skips them on re-run. |
+
+### Database migrations
+
+Schema is the Drizzle source-of-truth under `apps/api/src/db/schema/`,
+translating [`docs/data-model.md`](../../docs/data-model.md). The
+generated migration lives at `apps/api/drizzle/0000_shiny_alice.sql`.
+
+To apply migrations to Railway Postgres, follow
+[`docs/deploy/db-migrations.md`](../../docs/deploy/db-migrations.md).
+The short version:
+
+```bash
+railway link --project printsbytee --service api
+railway ssh --service api -- \
+  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+  pnpm --filter @printsbytee/api db:migrate
+```
 
 The `build`, `typecheck`, and `lint` scripts have `pre*` hooks that build `@printsbytee/shared` first. That package ships its TypeScript declarations via `dist/`, and the API imports from those declarations, so the shared package must be emitted before the API can resolve it. This keeps a clean fresh checkout (e.g. CI) working without extra steps.
 
