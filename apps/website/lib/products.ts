@@ -1,8 +1,12 @@
-import productsData from "@/data/products.json";
+import type { ProductWithStock, ProductCategory as ApiProductCategory } from '@printsbytee/shared';
 
-export type ProductCategory = 'lora-set' | 'aso-oke-kimono' | 'fringe-bubu' | 'naya-jump-suit' | 'lumi-set' | 'jasmine-set' | 'seline-dress' | 'aso-oke-pant' | 'kora-bubu' | 'mina-set';
+export type ProductCategory = ApiProductCategory;
 
-export interface Product {
+// Re-export ProductWithStock as the primary Product type
+export type Product = ProductWithStock;
+
+// Legacy JSON product shape for backwards compatibility during migration
+export interface LegacyProduct {
   id: string;
   slug: string;
   name: string;
@@ -15,9 +19,39 @@ export interface Product {
   notifyMeEnabled: boolean;
   featured: boolean;
   createdAt: string;
+  stockLabel?: 'low-stock' | null;
 }
 
-export const products: Product[] = productsData as Product[];
+/**
+ * Adapt a legacy JSON product to the new API product shape.
+ * Converts price from pounds to pence.
+ */
+export function adaptLegacyProduct(legacy: LegacyProduct): Product {
+  return {
+    id: legacy.id,
+    slug: legacy.slug,
+    name: legacy.name,
+    category: legacy.category,
+    description: legacy.description,
+    price: legacy.price !== null ? legacy.price * 100 : 0, // Convert pounds to pence
+    sizes: legacy.sizes,
+    images: legacy.images,
+    notifyMeEnabled: legacy.notifyMeEnabled,
+    featured: legacy.featured,
+    createdAt: legacy.createdAt,
+    updatedAt: legacy.createdAt, // Legacy products don't have updatedAt
+    inStock: legacy.inStock,
+    stockCount: legacy.inStock ? 1 : 0, // Approximate
+    stockLabel: legacy.stockLabel ?? null,
+  };
+}
+
+// Keep legacy products array export for backwards compatibility
+// This will be empty after full migration
+import productsData from "@/data/products.json";
+
+// Re-export products adapted for API format (legacy support)
+export const products: Product[] = (productsData as LegacyProduct[]).map(adaptLegacyProduct);
 
 export function getProductBySlug(slug: string): Product | undefined {
   return products.find(p => p.slug === slug);
@@ -81,9 +115,13 @@ export function getProductImage(key: string): string {
   return getProductGradient(key);
 }
 
-export function formatPrice(price: number | null): string {
-  if (price === null) return '';
-  return `£${price}`;
+/**
+ * Format price from pence to pounds string.
+ * @param pricePence - Price in pence (e.g., 4000 for £40)
+ */
+export function formatPrice(pricePence: number | null): string {
+  if (pricePence === null || pricePence === undefined) return '';
+  return `£${(pricePence / 100).toFixed(0)}`;
 }
 
 export function getCategoryLabel(category: Product['category']): string {

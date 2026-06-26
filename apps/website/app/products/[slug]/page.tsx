@@ -6,12 +6,12 @@ import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { ProductCard } from "@/components/products/ProductCard";
 import { PatternDivider } from "@/components/shared/PatternDivider";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
-import { getProductBySlug, products } from "@/lib/data";
+import { getProductBySlug, getProducts } from "@/lib/api-client";
 import { getCategoryLabel } from "@/lib/products";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   
   if (!product) {
     return { title: "Product Not Found — PrintsbyTee" };
@@ -25,15 +25,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
   // Get related products (same category, excluding current)
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.slug !== product.slug)
+  const allProducts = await getProducts({ category: product.category });
+  const relatedProducts = allProducts
+    .filter(p => p.slug !== product.slug)
     .slice(0, 3);
 
   return (
