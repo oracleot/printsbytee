@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 import { ProductGrid } from "@/components/products/ProductGrid";
+
+// Force dynamic rendering to avoid build-time API dependency
+export const dynamic = 'force-dynamic';
 import { PatternDivider } from "@/components/shared/PatternDivider";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
 import { getProducts } from "@/lib/api-client";

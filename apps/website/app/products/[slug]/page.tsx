@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+// Force dynamic rendering to avoid build-time API dependency
+export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
