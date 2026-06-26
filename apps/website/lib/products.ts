@@ -1,5 +1,3 @@
-import productsData from "@/data/products.json";
-
 export type ProductCategory = 'lora-set' | 'aso-oke-kimono' | 'fringe-bubu' | 'naya-jump-suit' | 'lumi-set' | 'jasmine-set' | 'seline-dress' | 'aso-oke-pant' | 'kora-bubu' | 'mina-set';
 
 export interface Product {
@@ -12,23 +10,51 @@ export interface Product {
   sizes: string[];
   images: string[];
   inStock: boolean;
+  stockCount?: number;
+  stockLabel?: string | null;
   notifyMeEnabled: boolean;
   featured: boolean;
   createdAt: string;
 }
 
-export const products: Product[] = productsData as Product[];
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return products.find(p => p.slug === slug);
+export async function getProducts(filters?: { category?: ProductCategory; featured?: boolean; inStock?: boolean }): Promise<Product[]> {
+  const url = new URL(`${API_URL}/products`);
+  if (filters) {
+    if (filters.category) url.searchParams.set('category', filters.category);
+    if (filters.featured !== undefined) url.searchParams.set('featured', String(filters.featured));
+    if (filters.inStock !== undefined) url.searchParams.set('inStock', String(filters.inStock));
+  }
+  
+  const res = await fetch(url.toString(), {
+    next: { revalidate: 10 },
+  });
+  if (!res.ok) {
+    console.error(`Failed to fetch products: ${res.statusText}`);
+    return [];
+  }
+  return res.json();
 }
 
-export function getProductsByCategory(category: Product['category']): Product[] {
-  return products.filter(p => p.category === category);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const res = await fetch(`${API_URL}/products/${slug}`, {
+    next: { revalidate: 10 },
+  });
+  if (!res.ok) {
+    if (res.status === 404) return undefined;
+    console.error(`Failed to fetch product by slug ${slug}: ${res.statusText}`);
+    return undefined;
+  }
+  return res.json();
 }
 
-export function getFeaturedProducts(): Product[] {
-  return products.filter(p => p.featured);
+export async function getProductsByCategory(category: ProductCategory): Promise<Product[]> {
+  return getProducts({ category });
+}
+
+export async function getFeaturedProducts(): Promise<Product[]> {
+  return getProducts({ featured: true });
 }
 
 export interface Enquiry {
@@ -83,7 +109,8 @@ export function getProductImage(key: string): string {
 
 export function formatPrice(price: number | null): string {
   if (price === null) return '';
-  return `£${price}`;
+  const pounds = price / 100;
+  return `£${pounds % 1 === 0 ? pounds : pounds.toFixed(2)}`;
 }
 
 export function getCategoryLabel(category: Product['category']): string {

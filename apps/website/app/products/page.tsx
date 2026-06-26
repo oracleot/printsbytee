@@ -2,14 +2,17 @@ import { Metadata } from "next";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { PatternDivider } from "@/components/shared/PatternDivider";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
-import { products } from "@/lib/data";
+import { getProducts } from "@/lib/data";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Our Collection — PrintsbyTee",
   description: "Explore our collection of premium African print fashion. Lora Sets, Aso Oke Kimonos, Fringe Bubus, and Naya Jump Suites for bold and beautiful women.",
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await getProducts();
   return (
     <>
       {/* Hero Header */}
