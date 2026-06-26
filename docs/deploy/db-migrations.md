@@ -131,14 +131,17 @@ workstation. `railway ssh` is the path that works in all setups.
 
 drizzle-kit's migrator maintains `drizzle.__drizzle_migrations` (a
 schema separate from `public`) with one row per applied migration.
-Re-running `pnpm db:migrate` is a **no-op** once `0000_shiny_alice`
-is recorded — the runner sees the migration is already applied and
-prints `No schema changes, nothing to migrate` and exits `0`.
-
-Re-running is therefore the safe default for CI, automation, and the
-human "I just want to be sure" reflex. It will not corrupt existing
-data, will not re-execute DDL, and will not fail with a "relation
-already exists" error.
+Re-running `pnpm db:migrate` once a migration is recorded is a **no-op**
+on the database: the runner sees the migration is already applied,
+emits no further DDL, and exits `0`. (The migrator's stdout still
+prints `[✓] migrations applied successfully!` even when there was
+nothing to apply — that wording comes from drizzle-kit 0.28 and is
+not a reliable "we did work" signal. Verify by re-querying the
+ledger, not by reading the message.) Re-running is therefore the
+safe default for CI, automation, and the human "I just want to be
+sure" reflex. Re-run the verification script (above) — the
+`drizzle.__drizzle_migrations` block will still print exactly one
+row.
 
 ## Rollback
 
