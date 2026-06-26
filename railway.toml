@@ -1,0 +1,6 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "corepack pnpm@9.0.0 install --frozen-lockfile --filter @printsbytee/api... && corepack pnpm@9.0.0 --filter @printsbytee/api build"
+
+[deploy]
+startCommand = "node apps/api/dist/index.js"
