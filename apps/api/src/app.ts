@@ -23,7 +23,7 @@ app.notFound((c) => {
     {
       error: {
         code: 'NOT_FOUND',
-        message: `No route for ${c.req.method} ${c.req.path}`,
+        message: 'Route not found',
       },
     },
     404,

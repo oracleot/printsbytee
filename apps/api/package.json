@@ -5,6 +5,7 @@
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
+    "predev": "pnpm --filter @printsbytee/shared build",
     "dev": "tsx watch src/index.ts",
     "prebuild": "pnpm --filter @printsbytee/shared build",
     "build": "tsc -p tsconfig.json",
