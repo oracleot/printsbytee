@@ -1,12 +1,18 @@
 import { Hono } from 'hono';
 import { HealthResponseSchema, type HealthResponse } from '@printsbytee/shared';
 
+import { routes } from './routes/index.js';
+
 /**
  * Hono application for the PrintsbyTee API.
  *
- * The first deployable slice only needs GET /health for the Railway
- * health check. All real endpoints (products, batches, auth, etc.)
- * land in later issues per `docs/plan.md`.
+ * - `GET /health` lives inline because it is the Railway health probe and
+ *   must remain cheap and side-effect-free even if downstream modules
+ *   (db, route modules) are still loading.
+ * - All real endpoints are mounted under `/...` from `./routes/index.ts`,
+ *   which is the single registration point for every feature module
+ *   (products, batches, auth, etc.). Adding a module means editing
+ *   `routes/index.ts`, not this file.
  */
 export const app = new Hono();
 
@@ -16,6 +22,8 @@ app.get('/health', (c) => {
   const response: HealthResponse = HealthResponseSchema.parse({ status: 'ok' });
   return c.json(response);
 });
+
+app.route('/', routes);
 
 app.notFound((c) => {
   // Match the error envelope documented in `docs/api-surface.md`.
