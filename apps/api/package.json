@@ -5,14 +5,14 @@
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
-    "predev": "pnpm --filter @printsbytee/shared build",
+    "predev": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "dev": "tsx watch src/index.ts",
-    "prebuild": "pnpm --filter @printsbytee/shared build",
+    "prebuild": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "pretypecheck": "pnpm --filter @printsbytee/shared build",
+    "pretypecheck": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prelint": "pnpm --filter @printsbytee/shared build",
+    "prelint": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "lint": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
