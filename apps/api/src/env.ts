@@ -51,7 +51,10 @@ const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>;
 
-const parsed = EnvSchema.safeParse(process.env);
+const envInput = Object.fromEntries(
+  Object.entries(process.env).filter(([, v]) => v !== ''),
+);
+const parsed = EnvSchema.safeParse(envInput);
 
 if (!parsed.success) {
   const issues = parsed.error.issues
