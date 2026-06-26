@@ -53,6 +53,12 @@ const EnvSchema = z.object({
   SMTP_PORT: optionalPositiveInt,
   SMTP_USER: optionalString,
   SMTP_PASS: optionalString,
+  // Optional — From-address override for outbound mail. When unset, the
+  // mail service falls back to SMTP_USER (which most SMTP providers
+  // require to be a verified sender anyway). Owners can set this to a
+  // dedicated "no-reply@printsbytee.uk" address to keep the From
+  // header stable across SMTP credential rotations.
+  SMTP_FROM: optionalEmail,
   ENQUIRY_EMAIL: optionalEmail,
 
   // Optional — used by POST /uploads (issue #22).
