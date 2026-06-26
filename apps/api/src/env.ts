@@ -9,6 +9,20 @@ import { z } from 'zod';
  * even when unused so they are documented in one place; adding the SMTP
  * or R2 clients later will not require touching this file.
  */
+// Helper: treat empty/whitespace strings as undefined for optional fields.
+// Lets `.env.example` placeholders (e.g. `SMTP_HOST=`) be pasted into a
+// dashboard or `.env` file without breaking boot.
+const emptyToUndefined = (v: unknown) =>
+  typeof v === 'string' && v.trim() === '' ? undefined : v;
+
+const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optionalEmail = z.preprocess(emptyToUndefined, z.string().email().optional());
+const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional());
+const optionalPositiveInt = z.preprocess(
+  emptyToUndefined,
+  z.coerce.number().int().positive().optional(),
+);
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
@@ -35,18 +49,18 @@ const EnvSchema = z.object({
     .refine((v) => v.trim().length > 0, 'INTERNAL_API_KEY must not be blank'),
 
   // Optional — used by POST /enquiries (issue #16).
-  SMTP_HOST: z.string().min(1).optional(),
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
-  SMTP_USER: z.string().min(1).optional(),
-  SMTP_PASS: z.string().min(1).optional(),
-  ENQUIRY_EMAIL: z.string().email().optional(),
+  SMTP_HOST: optionalString,
+  SMTP_PORT: optionalPositiveInt,
+  SMTP_USER: optionalString,
+  SMTP_PASS: optionalString,
+  ENQUIRY_EMAIL: optionalEmail,
 
   // Optional — used by POST /uploads (issue #22).
-  R2_ACCOUNT_ID: z.string().min(1).optional(),
-  R2_BUCKET: z.string().min(1).optional(),
-  R2_ACCESS_KEY_ID: z.string().min(1).optional(),
-  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-  R2_PUBLIC_BASE_URL: z.string().url().optional(),
+  R2_ACCOUNT_ID: optionalString,
+  R2_BUCKET: optionalString,
+  R2_ACCESS_KEY_ID: optionalString,
+  R2_SECRET_ACCESS_KEY: optionalString,
+  R2_PUBLIC_BASE_URL: optionalUrl,
 });
 
 export type Env = z.infer<typeof EnvSchema>;
