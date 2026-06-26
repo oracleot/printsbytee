@@ -11,6 +11,13 @@ import { waitlistEntries } from '../db/schema/leads.js';
 
 // Postgres unique-violation error code for the (productId, email) constraint.
 const PG_UNIQUE_VIOLATION = '23505';
+// Postgres FK-violation error code (referenced productId doesn't exist).
+const PG_FK_VIOLATION = '23503';
+
+/** Narrow a caught error to a Postgres-dictionary error object. */
+function isPgError(e: unknown): e is { code: string } {
+  return typeof e === 'object' && e !== null && typeof (e as Record<string, unknown>).code === 'string';
+}
 
 export const waitlistApp = new Hono();
 
@@ -25,8 +32,20 @@ export const waitlistApp = new Hono();
  * 409: { error: { code: "CONFLICT", message } }  — duplicate (productId, email)
  */
 waitlistApp.post('/', async (c) => {
+  // ── Parse JSON body (gracefully handle malformed input) ─────────────────
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(
+      ErrorResponseSchema.parse({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON body' },
+      }),
+      400,
+    );
+  }
+
   // ── Validate request body ────────────────────────────────────────────────
-  const body = await c.req.json();
   const parsed = CreateWaitlistRequestSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -51,7 +70,9 @@ waitlistApp.post('/', async (c) => {
       .values({ productId, email })
       .returning();
 
-    return c.json(WaitlistEntrySchema.parse(row), 201);
+    // Drizzle returns a JS Date for createdAt; serialize to ISO string so
+    // the response matches the WaitlistEntrySchema contract (isoTimestampSchema).
+    return c.json(WaitlistEntrySchema.parse({ ...row, createdAt: row.createdAt.toISOString() }), 201);
   } catch (err: unknown) {
     // Catch Postgres unique-violation for (productId, email) → 409 CONFLICT.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +87,16 @@ waitlistApp.post('/', async (c) => {
           },
         }),
         409,
+      );
+    }
+
+    // Unknown productId (FK violation) → 400 VALIDATION_ERROR.
+    if (isPgError(err) && err.code === PG_FK_VIOLATION) {
+      return c.json(
+        ErrorResponseSchema.parse({
+          error: { code: 'VALIDATION_ERROR', message: 'Unknown productId' },
+        }),
+        400,
       );
     }
 
