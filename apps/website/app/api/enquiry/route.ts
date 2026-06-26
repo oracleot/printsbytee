@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
-import { sendEnquiryEmail } from "@/lib/mail";
 
 const enquirySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -14,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validate input
+    // Validate input locally first for fast feedback
     const result = enquirySchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
@@ -24,23 +22,54 @@ export async function POST(request: Request) {
     }
 
     const { name, email, productInterest, message } = result.data;
-    const id = randomUUID();
-    const createdAt = new Date().toISOString();
 
-    console.log(`[Enquiry] New submission id=${id} name=${name} email=${email} productInterest=${productInterest ?? 'none'}`);
-
-    // Send email notification
-    try {
-      await sendEnquiryEmail({ name, email, productInterest, message });
-    } catch (emailError) {
-      console.error(`[Enquiry] Failed to send enquiry email for id=${id}:`, emailError);
-      // Still return success — email failure shouldn't block the response
-      // TODO: implement a proper external service (e.g. queue, SendGrid) for production
+    // Forward to Railway API
+    const apiUrl = process.env.API_URL;
+    if (!apiUrl) {
+      console.error("[Enquiry] API_URL not configured");
+      return NextResponse.json(
+        { success: false, error: "Service temporarily unavailable" },
+        { status: 503 }
+      );
     }
 
-    return NextResponse.json({ success: true, id, createdAt }, { status: 200 });
+    // Map website's `productInterest` (free text) to API's `productId` (nullable UUID)
+    // The website allows free-text for product interest, but the API expects a UUID.
+    // Pass undefined so the API handles it as a general enquiry.
+    const response = await fetch(`${apiUrl}/enquiries`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-API-Key": process.env.INTERNAL_API_KEY ?? "",
+      },
+      body: JSON.stringify({ name, email, message }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return NextResponse.json(
+        { success: true, id: data.id, createdAt: data.createdAt },
+        { status: 200 }
+      );
+    }
+
+    // Parse API error response
+    let errorMessage = "Failed to submit enquiry. Please try again.";
+    try {
+      const errorData = await response.json();
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      }
+    } catch {
+      // Use default message
+    }
+
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: response.status }
+    );
   } catch (error) {
-    console.error("[Enquiry] Submission error:", error);
+    console.error("[Enquiry] Proxy error:", error);
     return NextResponse.json(
       { success: false, error: "An unexpected error occurred. Please try again." },
       { status: 500 }
