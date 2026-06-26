@@ -1,0 +1,1 @@
+export { products, getProductBySlug, getProductsByCategory, getFeaturedProducts, type Product } from './products';
