@@ -18,7 +18,7 @@ importers:
         specifier: ^1.19.0
         version: 1.19.14(hono@4.12.27)
       '@printsbytee/shared':
-        specifier: workspace:*
+        specifier: file:../../packages/shared
         version: link:../../packages/shared
       drizzle-orm:
         specifier: ^0.36.0
