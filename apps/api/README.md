@@ -22,6 +22,31 @@ This package is the Hono + TypeScript + Drizzle + Zod service that runs on Railw
 
 The `build`, `typecheck`, and `lint` scripts have `pre*` hooks that build `@printsbytee/shared` first. That package ships its TypeScript declarations via `dist/`, and the API imports from those declarations, so the shared package must be emitted before the API can resolve it. This keeps a clean fresh checkout (e.g. CI) working without extra steps.
 
+## Install / build order
+
+### pnpm workspace flow
+
+Keep using the normal workspace flow for local development:
+
+```bash
+pnpm install
+pnpm --filter @printsbytee/api dev
+```
+
+### npm install fallback
+
+For environments that only run `npm install` inside `apps/api` (for example Railway), `@printsbytee/shared` is linked via a local `file:` dependency instead of pnpm's `workspace:*` protocol.
+
+Build the shared package first so its published entrypoints already exist:
+
+```bash
+pnpm --filter @printsbytee/shared build
+cd apps/api
+npm install --omit=dev
+```
+
+After that, `node_modules/@printsbytee/shared/dist/index.js` is available for the API build/runtime.
+
 ## Environment variables
 
 All vars are loaded and validated by `src/env.ts`. Required vars fail the process on boot with a clear error.

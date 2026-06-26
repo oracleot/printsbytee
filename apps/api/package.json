@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.19.0",
-    "@printsbytee/shared": "workspace:*",
+    "@printsbytee/shared": "file:../../packages/shared",
     "drizzle-orm": "^0.36.0",
     "hono": "^4.12.0",
     "pg": "^8.13.0",
