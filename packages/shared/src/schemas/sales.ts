@@ -12,7 +12,7 @@ export const SaleSchema = z.object({
 });
 
 export const RecordSaleRequestSchema = z.object({
-  salePrice: penceSchema,
+  salePrice: penceSchema.optional(),
   soldAt: isoTimestampSchema.optional(),
   customerName: z.string().optional(),
   customerContact: z.string().optional(),
