@@ -1,0 +1,6 @@
+# Generated artefacts
+.image-map.json
+
+# Defensive: should never be present (noEmit: true) but keep clean
+dist/
+node_modules/
