@@ -10,6 +10,7 @@ build
 .env.*.local
 .vercel
 .tsbuildinfo
+*.tsbuildinfo
 assets/
 *.psd
 WhatsApp Image*.jpeg
