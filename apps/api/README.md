@@ -20,6 +20,8 @@ This package is the Hono + TypeScript + Drizzle + Zod service that runs on Railw
 | `pnpm --filter @printsbytee/api db:generate` | Placeholder for Drizzle migration generation (issue #10/#11). |
 | `pnpm --filter @printsbytee/api db:migrate` | Placeholder for Drizzle migration runner (issue #11). |
 
+The `build`, `typecheck`, and `lint` scripts have `pre*` hooks that build `@printsbytee/shared` first. That package ships its TypeScript declarations via `dist/`, and the API imports from those declarations, so the shared package must be emitted before the API can resolve it. This keeps a clean fresh checkout (e.g. CI) working without extra steps.
+
 ## Environment variables
 
 All vars are loaded and validated by `src/env.ts`. Required vars fail the process on boot with a clear error.
