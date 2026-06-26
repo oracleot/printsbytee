@@ -6,9 +6,12 @@ import { PatternDivider } from "@/components/shared/PatternDivider";
 // NewsletterForm hidden until API integration is complete
 // import { NewsletterForm } from "@/components/home/NewsletterForm";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
-import { products as allProducts } from "@/lib/data";
+import { getProducts } from "@/lib/data";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const allProducts = await getProducts();
   return (
     <>
       <HeroSection />

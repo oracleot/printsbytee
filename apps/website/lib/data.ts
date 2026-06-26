@@ -1,1 +1,1 @@
-export { products, getProductBySlug, getProductsByCategory, getFeaturedProducts, type Product } from './products';
+export { getProducts, getProductBySlug, getProductsByCategory, getFeaturedProducts, type Product } from './products';
