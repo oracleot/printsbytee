@@ -35,4 +35,3 @@ jobs:
       
       - name: Build
         run: pnpm -r build
-        continue-on-error: true
