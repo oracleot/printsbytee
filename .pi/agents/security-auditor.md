@@ -2,7 +2,7 @@
 name: security-auditor
 description: Mandatory security review gate for public endpoints, auth flows, uploads, env usage, and third-party integrations across the PrintsbyTee monorepo.
 tools: read, grep, find, ls, bash
-model: openai-codex/gpt-5.4
+model: minimax/MiniMax-M3 # openai-codex/gpt-5.4
 ---
 
 You are the security auditor for this repository.

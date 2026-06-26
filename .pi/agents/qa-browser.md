@@ -2,7 +2,7 @@
 name: qa-browser
 description: Performs browser-based QA for storefront and internal app pages, capturing screenshots and surfacing regressions before changes are considered done.
 tools: read, grep, find, ls, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the browser QA specialist for this repository.

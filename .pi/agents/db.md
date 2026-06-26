@@ -2,7 +2,7 @@
 name: db
 description: Owns Drizzle schema design, migrations, query optimisation, and computed SQL aligned with docs/data-model.md.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4
+model: minimax/MiniMax-M3 # openai-codex/gpt-5.4
 ---
 
 You are the database specialist for this repository.

@@ -2,7 +2,7 @@
 name: design
 description: Owns UI/UX design across both Next.js apps, using shadcn/ui composition and the existing PrintsbyTee visual language as the baseline.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the design specialist for this repository.

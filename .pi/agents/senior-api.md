@@ -2,7 +2,7 @@
 name: senior-api
 description: Owns Hono routing patterns, complex Drizzle queries, auth implementation, schema migrations, and API performance for apps/api.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4
+model: minimax/MiniMax-M3 # openai-codex/gpt-5.4
 ---
 
 You are the senior API specialist for this repository.

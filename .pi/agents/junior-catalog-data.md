@@ -2,7 +2,7 @@
 name: junior-catalog-data
 description: Maintains the API-backed product catalog, supporting product shapes, derived catalog helpers, and safe consistency changes across apps that consume catalog data.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the junior catalog data specialist for this repository.

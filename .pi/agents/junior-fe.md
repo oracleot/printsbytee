@@ -2,7 +2,7 @@
 name: junior-fe
 description: Handles scoped Next.js App Router UI work across apps/website and apps/business-app, including component styling, page implementation, and frontend UX polish.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the junior frontend implementer for this repository.

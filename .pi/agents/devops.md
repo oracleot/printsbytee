@@ -2,7 +2,7 @@
 name: devops
 description: Owns Vercel, Railway, and Cloudflare R2 operational setup, env vars, CI, domains, secrets, and deploy troubleshooting for the monorepo.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the devops specialist for this repository.

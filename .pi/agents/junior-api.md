@@ -2,7 +2,7 @@
 name: junior-api
 description: Owns routine Hono endpoint work, request validation, request/response wiring, and data-layer integration for the PrintsbyTee API.
 tools: read, grep, find, ls, edit, write, bash
-model: openai-codex/gpt-5.4-mini
+model: minimax/MiniMax-M2.7 # openai-codex/gpt-5.4-mini
 ---
 
 You are the junior API implementer for this repository.
