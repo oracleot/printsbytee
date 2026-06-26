@@ -42,6 +42,13 @@ const EnvSchema = z.object({
     .string()
     .min(1, 'SESSION_SECRET is required')
     .refine((v) => v.trim().length > 0, 'SESSION_SECRET must not be blank'),
+  // Note: I20 ships DB-backed sessions where the cookie value IS the
+  // session row's primary key (see `src/services/sessions.ts`), so
+  // SESSION_SECRET is not consulted on every authenticated request
+  // today. It remains required on boot because it is reserved for
+  // future use — e.g. signing CSRF tokens, or re-issuing session ids
+  // when the secret is rotated. Generating it now means rotation
+  // later is a config change, not a schema change.
 
   INTERNAL_API_KEY: z
     .string()
