@@ -75,10 +75,7 @@ waitlistApp.post('/', async (c) => {
     return c.json(WaitlistEntrySchema.parse({ ...row, createdAt: row.createdAt.toISOString() }), 201);
   } catch (err: unknown) {
     // Catch Postgres unique-violation for (productId, email) → 409 CONFLICT.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pgCode = (err as any)?.code as string | undefined;
-
-    if (pgCode === PG_UNIQUE_VIOLATION) {
+    if (isPgError(err) && err.code === PG_UNIQUE_VIOLATION) {
       return c.json(
         ErrorResponseSchema.parse({
           error: {
