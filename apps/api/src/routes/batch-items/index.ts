@@ -4,12 +4,13 @@ import { requireSession } from '../../middleware/requireSession.js';
 import type { AppEnv } from '../../types.js';
 
 import { deleteBatchItem } from './handlers/delete.js';
+import { recordBatchItemSale } from './handlers/sale.js';
 import { updateBatchItem } from './handlers/update.js';
 
 /**
- * Batch-item by-id endpoints (I24).
+ * Batch-item by-id endpoints (I24 + I25).
  *
- * Both endpoints are owner-only — mounted behind `requireSession`
+ * All endpoints are owner-only — mounted behind `requireSession`
  * inline below. The path-scoped counterparts (`GET /batches/:id/items`
  * and `POST /batches/:id/items`) live on the existing `batchesRouter`
  * because the `:id` is the *batch* there, not the item.
@@ -27,6 +28,16 @@ import { updateBatchItem } from './handlers/update.js';
  *                              `sales` row references the item
  *                              (probe, not FK — `sales.batch_item_id`
  *                              is `ON DELETE CASCADE`).
+ *   POST    /batch-items/:id/sale
+ *                            — record a sale (I25). 201 with the
+ *                              new `Sale` row. 404 if the item id
+ *                              is unknown. 409 `CONFLICT` if the
+ *                              item is already sold. The
+ *                              `SELECT ... FOR UPDATE` lock on the
+ *                              BatchItem + the Sale INSERT + the
+ *                              BatchItem status flip all run inside
+ *                              a single `db.transaction(...)` — see
+ *                              `apps/api/src/routes/sales/_shared/record-sale.ts`.
  *
  * Error envelopes follow the canonical shape from
  * `docs/api-surface.md`. All 4xx paths use `ErrorResponseSchema.parse`
@@ -37,5 +48,6 @@ const batchItemsRouter = new Hono<AppEnv>();
 
 batchItemsRouter.patch('/:id', requireSession, updateBatchItem);
 batchItemsRouter.delete('/:id', requireSession, deleteBatchItem);
+batchItemsRouter.post('/:id/sale', requireSession, recordBatchItemSale);
 
 export { batchItemsRouter };
