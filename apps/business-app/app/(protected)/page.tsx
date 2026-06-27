@@ -4,6 +4,7 @@
  * This page is only reached when the `(protected)/layout.tsx` auth gate
  * has verified a valid session. It shows:
  * - A welcome message confirming the owner is authenticated
+ * - A "Manage products" card linking to /products
  * - The API health-check card (preserved from the I26 scaffold)
  *
  * The sign-out button lives in the protected layout's top bar.
@@ -11,6 +12,8 @@
 
 import type { HealthResponse } from "@printsbytee/shared";
 import { apiBaseUrl } from "@/lib/api-server";
+import Link from "next/link";
+import { ArrowRightIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +61,24 @@ export default async function HomePage() {
           You are signed in. Use the top bar to sign out, or check the API health below.
         </p>
       </div>
+
+      {/* Manage products card */}
+      <Link
+        href="/products"
+        className="group block rounded-3xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-primary/30 hover:bg-card/80"
+      >
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">I33 catalog</p>
+        <h2 className="mt-3 text-3xl font-heading text-balance group-hover:text-primary">
+          Manage products
+        </h2>
+        <p className="mt-3 max-w-2xl text-muted-foreground">
+          Browse, create, edit, and delete products in your catalog.
+        </p>
+        <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
+          Go to products
+          <ArrowRightIcon className="transition-transform group-hover:translate-x-1" />
+        </div>
+      </Link>
 
       {/* Health check card */}
       <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
