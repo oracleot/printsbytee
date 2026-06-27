@@ -64,6 +64,11 @@ for (const r of flat) {
 // I23 adds the full batch CRUD surface (one read-one, one list, one
 // create, one update, one delete). Asserting all five guards against
 // a future split that silently drops a method.
+//
+// I24 adds four batch-item routes: two batch-scoped (mounted on
+// `batchesRouter` at /batches/:id/items) and two by-id (mounted on
+// `batchItemsRouter` at /batch-items/:id). Asserting all four keeps
+// the split-handler refactor honest.
 const required: Array<[string, string]> = [
   ['POST', '/waitlist'],
   ['POST', '/enquiries'],
@@ -77,6 +82,10 @@ const required: Array<[string, string]> = [
   ['GET', '/batches/:id'],
   ['PATCH', '/batches/:id'],
   ['DELETE', '/batches/:id'],
+  ['GET', '/batches/:id/items'],
+  ['POST', '/batches/:id/items'],
+  ['PATCH', '/batch-items/:id'],
+  ['DELETE', '/batch-items/:id'],
 ];
 
 let failed = 0;
