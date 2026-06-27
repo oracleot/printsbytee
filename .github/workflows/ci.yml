@@ -32,6 +32,17 @@ jobs:
       - name: Lint
         run: pnpm -r lint
         continue-on-error: false
-      
+
+      # Route-registration smoke check for @printsbytee/api.
+      # Does NOT need a live Postgres — it only introspects Hono's
+      # internal router table. `env.ts` validates required env vars on
+      # import though, so we supply placeholder values.
+      - name: Smoke check routes (@printsbytee/api)
+        env:
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          SESSION_SECRET: test-session-secret
+          INTERNAL_API_KEY: test-internal-key
+        run: pnpm --filter @printsbytee/api exec tsx scripts/smoke-check-routes.ts
+
       - name: Build
         run: pnpm -r build
