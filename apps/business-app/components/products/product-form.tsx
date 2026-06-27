@@ -74,6 +74,10 @@ export function ProductForm({ mode, initialValues, id }: Props) {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        router.push("/login?reason=expired");
+        return;
+      }
       const errorBody = (await response.json().catch(() => ({}))) as {
         error?: { message?: string };
       };

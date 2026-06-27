@@ -132,7 +132,7 @@ export function ProductFormFields({ form, mode }: ProductFormFieldsProps) {
           <p className="text-xs text-destructive">{errors.price.message}</p>
         )}
         <p className="text-xs text-muted-foreground">
-          Enter price in GBP (e.g. 4000 for £40.00)
+          Enter price in pence (e.g. 4000 for £40.00)
         </p>
       </div>
 

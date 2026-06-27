@@ -51,6 +51,12 @@ export function DeleteProductDialog({
       return;
     }
 
+    if (response.status === 401) {
+      setOpen(false);
+      router.push("/login?reason=expired");
+      return;
+    }
+
     // 409 or other error — surface the API's message
     const body = (await response.json().catch(() => ({}))) as {
       error?: { message?: string };
@@ -61,13 +67,15 @@ export function DeleteProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        {trigger ?? (
-          <Button variant="ghost" size="icon-xs">
-            <Trash2Icon />
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          (trigger as React.ReactElement) ?? (
+            <Button variant="ghost" size="icon-xs" aria-label={`Delete ${name}`}>
+              <Trash2Icon />
+            </Button>
+          )
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete &quot;{name}&quot;?</DialogTitle>

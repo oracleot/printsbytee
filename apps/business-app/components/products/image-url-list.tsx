@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { XIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, XIcon } from "lucide-react";
 
 interface ImageUrlListProps {
   value: string[];
@@ -38,6 +38,20 @@ export function ImageUrlList({ value, onChange, error }: ImageUrlListProps) {
     onChange(value.filter((_, i) => i !== index));
   }
 
+  function moveUp(index: number) {
+    if (index === 0) return;
+    const next = [...value];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    onChange(next);
+  }
+
+  function moveDown(index: number) {
+    if (index === value.length - 1) return;
+    const next = [...value];
+    [next[index + 1], next[index]] = [next[index], next[index + 1]];
+    onChange(next);
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -51,13 +65,33 @@ export function ImageUrlList({ value, onChange, error }: ImageUrlListProps) {
       {value.length > 0 && (
         <ul className="space-y-1.5">
           {value.map((url, index) => (
-            <li key={index} className="flex items-center gap-2">
+            <li key={index} className="flex items-center gap-1">
               <Input
                 value={url}
                 readOnly
                 className="flex-1 text-xs"
                 placeholder="https://..."
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => moveUp(index)}
+                disabled={index === 0}
+                aria-label={`Move image ${index + 1} up`}
+              >
+                <ArrowUpIcon />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => moveDown(index)}
+                disabled={index === value.length - 1}
+                aria-label={`Move image ${index + 1} down`}
+              >
+                <ArrowDownIcon />
+              </Button>
               <Button
                 type="button"
                 variant="ghost"
