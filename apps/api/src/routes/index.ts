@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { productsRouter } from './products.js';
+import { productsRouter } from './products/index.js';
 import { authApp } from './auth.js';
 import { waitlistApp } from './waitlist.js';
 import { enquiriesApp } from './enquiries.js';
