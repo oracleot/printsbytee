@@ -10,11 +10,11 @@ import type { ProductWithStock } from '@printsbytee/shared';
 
 // Lazy getter so the throw only fires when apiFetch is called, not at module eval time.
 // This lets Next.js build succeed without the env var while still failing loudly in production
-// if INTERNAL_API_URL is unset.
+// if API_BASE_URL is unset.
 function getApiUrl(): string {
-  const url = process.env.INTERNAL_API_URL;
+  const url = process.env.API_BASE_URL;
   if (!url) {
-    throw new Error("INTERNAL_API_URL is not configured. Set it in Vercel environment variables.");
+    throw new Error("API_BASE_URL is not configured. Set it in Vercel environment variables.");
   }
   return url;
 }
