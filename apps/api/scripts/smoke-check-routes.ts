@@ -69,6 +69,10 @@ for (const r of flat) {
 // `batchesRouter` at /batches/:id/items) and two by-id (mounted on
 // `batchItemsRouter` at /batch-items/:id). Asserting all four keeps
 // the split-handler refactor honest.
+//
+// I25 adds two sale routes: POST /batch-items/:id/sale (mounted on
+// `batchItemsRouter`) and DELETE /sales/:id (mounted on a new
+// `salesRouter`). Both must be present, in the documented paths.
 const required: Array<[string, string]> = [
   ['POST', '/waitlist'],
   ['POST', '/enquiries'],
@@ -86,6 +90,8 @@ const required: Array<[string, string]> = [
   ['POST', '/batches/:id/items'],
   ['PATCH', '/batch-items/:id'],
   ['DELETE', '/batch-items/:id'],
+  ['POST', '/batch-items/:id/sale'],
+  ['DELETE', '/sales/:id'],
 ];
 
 let failed = 0;
