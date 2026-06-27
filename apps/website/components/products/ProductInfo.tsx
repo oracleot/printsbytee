@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { getCategoryLabel, formatPrice, Product } from "@/lib/products";
+import { getCategoryLabel, formatPrice, Product } from "@/lib/format";
 import { ProductSizeSelector } from "./ProductSizeSelector";
 import { ProductAccordion } from "./ProductAccordion";
 import { ProductCTA } from "./ProductCTA";

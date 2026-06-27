@@ -1,7 +1,7 @@
 "use client";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { getCategoryLabel, getSizeChart, type Product } from "@/lib/products";
+import { getCategoryLabel, getSizeChart, type Product } from "@/lib/format";
 
 interface ProductAccordionProps {
   category: Product["category"];

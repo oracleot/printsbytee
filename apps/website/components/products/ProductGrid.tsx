@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ProductCard } from "./ProductCard";
-import { Product } from "@/lib/products";
+import { Product } from "@/lib/format";
 
 interface ProductGridProps {
   products: Product[];
