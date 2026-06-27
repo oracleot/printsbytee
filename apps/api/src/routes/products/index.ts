@@ -24,7 +24,9 @@ import { updateProduct } from './handlers/update.js';
  *                            returns 400. 404 if the id is unknown.
  *   DELETE /products/:id  → hard delete. 204 on success.
  *                            409 if any `batch_items` row references
- *                            the product (FK RESTRICT).
+ *                            the product (FK RESTRICT), or if any
+ *                            `waitlist_entries` row does. The 409
+ *                            message discriminates between the two.
  *
  * Both reads include derived `inStock`, `stockCount`, and `stockLabel`
  * fields per `docs/data-model.md`. Writes return the base `Product`

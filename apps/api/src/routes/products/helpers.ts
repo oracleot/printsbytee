@@ -29,15 +29,37 @@ export function isPgError(e: unknown): e is { code: string; constraint?: string 
   return true;
 }
 
-// ── FK 409 message helper ──────────────────────────────────────────────
+// ── FK constraint → user-facing 409 message map ─────────────────────────
 //
-// Preserved verbatim from the pre-refactor DELETE handler: any `23503`
-// returns the same generic copy because today there is exactly one
-// RESTRICT FK in play (`batch_items.product_id`). The `constraint`
-// argument is forwarded by the caller so a follow-up commit can
-// discriminate per FK without touching the call site again.
-export function fkViolationMessage(_constraint: string | undefined): string {
-  return 'Product has batch items and cannot be deleted';
+// `db/schema/batches.ts` and `db/schema/leads.ts` both declare FKs to
+// `products.id` with `ON DELETE RESTRICT`. Postgres surfaces a 23503 on
+// the parent DELETE; we discriminate by `err.constraint` so the message
+// tells the client *why* the delete was refused.
+//
+//   batch_items_product_id_products_id_fk    → batch_items reference it
+//   waitlist_entries_product_id_products_id_fk → waitlist entries
+//
+// `enquiries_product_id_products_id_fk` uses `ON DELETE SET NULL`, so a
+// parent DELETE never trips 23503 on it — no entry needed here. The
+// default branch covers future FKs that may be added with RESTRICT.
+export const FK_CONSTRAINT_MESSAGES: Record<string, string> = {
+  batch_items_product_id_products_id_fk:
+    'Product has batch items and cannot be deleted',
+  waitlist_entries_product_id_products_id_fk:
+    'Product has waitlist entries and cannot be deleted',
+};
+
+export const GENERIC_FK_MESSAGE = 'Product cannot be deleted while referenced by other records';
+
+/**
+ * Look up the user-facing 409 message for a `23503` FK violation.
+ *
+ * Exported so a unit test can exercise the mapping without standing up
+ * a live Postgres — see `scripts/test-product-delete-fk-mapping.ts`.
+ */
+export function fkViolationMessage(constraint: string | undefined): string {
+  if (!constraint) return GENERIC_FK_MESSAGE;
+  return FK_CONSTRAINT_MESSAGES[constraint] ?? GENERIC_FK_MESSAGE;
 }
 
 // ── Query-string coercion helpers ───────────────────────────────────────

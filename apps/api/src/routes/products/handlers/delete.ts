@@ -17,17 +17,31 @@ import {
 /**
  * `DELETE /products/:id` — hard-delete a product.
  *
- * Owner-only. Hard-deletes a product. Refuses with 409 if any
- * `batch_items` row references the product — the FK is declared
- * `ON DELETE RESTRICT` in `db/schema/batches.ts`, so Postgres rejects
- * the DELETE before any row is removed and we surface that as a
- * canonical 409 envelope instead of letting the driver throw a 500.
+ * Owner-only. Refuses with 409 if any child row references the product
+ * via a `RESTRICT`-mode FK. The mapping from `err.constraint` to the
+ * user-facing 409 message lives in `helpers.ts`:
+ *
+ *   constraint → message
+ *   ────────────────────────────────────────────────────────────────
+ *   batch_items_product_id_products_id_fk
+ *     → "Product has batch items and cannot be deleted"
+ *   waitlist_entries_product_id_products_id_fk
+ *     → "Product has waitlist entries and cannot be deleted"
+ *   (anything else)
+ *     → "Product cannot be deleted while referenced by other records"
+ *
+ * `enquiries_product_id_products_id_fk` is `ON DELETE SET NULL`, so a
+ * parent DELETE never trips 23503 on it — no mapping needed.
+ *
+ * The unit test in `scripts/test-product-delete-fk-mapping.ts`
+ * exercises the mapping table directly so the constraint → message
+ * association stays correct under refactors.
  *
  *   204                                — deleted, no body
  *   400 { error: VALIDATION_ERROR }   — malformed id
  *   401 { error: UNAUTHORIZED }       — from requireSession
  *   404 { error: NOT_FOUND }          — id is well-formed but unknown
- *   409 { error: CONFLICT }           — batch_items reference the product
+ *   409 { error: CONFLICT }           — child FK references the product
  */
 export async function deleteProduct(c: Context<AppEnv>): Promise<Response> {
   const idResult = parseIdParam(c);
@@ -57,10 +71,10 @@ export async function deleteProduct(c: Context<AppEnv>): Promise<Response> {
 
     return c.body(null, 204);
   } catch (err: unknown) {
-    // FK violation from `batch_items.product_id` (ON DELETE RESTRICT).
-    // The error's `constraint` field names the FK, but the message
-    // we return is the canonical English copy — clients should match
-    // on the error code, not the message.
+    // FK violation from a child table with `ON DELETE RESTRICT`.
+    // Discriminate by `err.constraint` so the message tells the client
+    // *which* child table blocked the delete. See method docstring and
+    // `FK_CONSTRAINT_MESSAGES` in `helpers.ts` for the full mapping.
     if (isPgError(err) && err.code === PG_FK_VIOLATION) {
       return c.json(
         ErrorResponseSchema.parse({
