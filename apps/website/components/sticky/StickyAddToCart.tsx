@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Product, formatPrice } from "@/lib/products";
+import { Product, formatPrice } from "@/lib/format";
 
 interface StickyAddToCartProps {
   product: Product;

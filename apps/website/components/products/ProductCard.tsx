@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye } from "lucide-react";
-import { getProductImage, formatPrice, getCategoryLabel, Product } from "@/lib/products";
+import { getProductImage, formatPrice, getCategoryLabel, Product } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {

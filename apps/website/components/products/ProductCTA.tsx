@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Product } from "@/lib/products";
+import { Product } from "@/lib/format";
 
 interface ProductCTAProps {
   product: Product;

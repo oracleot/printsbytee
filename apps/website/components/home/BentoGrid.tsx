@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { getProductImage, formatPrice, getCategoryLabel, Product } from "@/lib/products";
+import { getProductImage, formatPrice, getCategoryLabel, Product } from "@/lib/format";
 
 interface BentoGridProps {
   products: Product[];

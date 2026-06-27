@@ -10,7 +10,7 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { PatternDivider } from "@/components/shared/PatternDivider";
 import { WhatsAppButton } from "@/components/shared/WhatsAppButton";
 import { getProductBySlug, getProducts } from "@/lib/api-client";
-import { getCategoryLabel } from "@/lib/products";
+import { getCategoryLabel } from "@/lib/format";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

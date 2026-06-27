@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getProductGradient, Product } from "@/lib/products";
+import { getProductGradient, Product } from "@/lib/format";
 import { LazyImage } from "./LazyImage";
 
 interface ProductGalleryProps {

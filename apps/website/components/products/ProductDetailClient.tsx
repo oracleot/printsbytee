@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { ProductGallery } from "./ProductGallery";
 import { ProductInfo } from "./ProductInfo";
 import { NotifyMeModal } from "./NotifyMeModal";
-import { Product } from "@/lib/products";
+import { Product } from "@/lib/format";
 import { StickyAddToCart } from "@/components/sticky/StickyAddToCart";
 import { useStickyAddToCart } from "@/components/sticky/useStickyAddToCart";
 
