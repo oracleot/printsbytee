@@ -55,11 +55,19 @@ for (const r of flat) {
 }
 
 // Assert the critical paths exist.
+//
+// I21 adds three owner-gated write routes for /products. Asserting
+// them here catches the case where a future refactor splits the
+// products router into a sub-directory and silently drops one of the
+// methods (e.g. `patch` becomes a typo for `put`).
 const required: Array<[string, string]> = [
   ['POST', '/waitlist'],
   ['POST', '/enquiries'],
   ['GET', '/products'],
   ['POST', '/auth/login'],
+  ['POST', '/products'],
+  ['PATCH', '/products/:id'],
+  ['DELETE', '/products/:id'],
 ];
 
 let failed = 0;
