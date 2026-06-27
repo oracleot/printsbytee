@@ -12,12 +12,19 @@ import { NextResponse } from "next/server";
 // In production, clients should use @/lib/api-client directly
 export async function GET() {
   try {
-    const API_URL = process.env.API_BASE_URL;
-    const API_KEY = process.env.INTERNAL_API_KEY ?? '';
+    const INTERNAL_API_URL = process.env.INTERNAL_API_URL;
+    if (!INTERNAL_API_URL) {
+      console.error("[Products] INTERNAL_API_URL not configured");
+      return NextResponse.json(
+        { error: "Service temporarily unavailable" },
+        { status: 503 }
+      );
+    }
+    const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? '';
 
-    const response = await fetch(`${API_URL}/products`, {
+    const response = await fetch(`${INTERNAL_API_URL}/products`, {
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${INTERNAL_API_KEY}`,
         'Content-Type': 'application/json',
       },
     });
