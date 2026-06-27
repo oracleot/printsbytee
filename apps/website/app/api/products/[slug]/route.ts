@@ -14,12 +14,19 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const API_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
-    const API_KEY = process.env.INTERNAL_API_KEY ?? '';
+    const API_BASE_URL = process.env.API_BASE_URL;
+    if (!API_BASE_URL) {
+      console.error("[Products] API_BASE_URL not configured");
+      return NextResponse.json(
+        { error: "Service temporarily unavailable" },
+        { status: 503 }
+      );
+    }
+    const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? '';
 
-    const response = await fetch(`${API_URL}/products/${slug}`, {
+    const response = await fetch(`${API_BASE_URL}/products/${slug}`, {
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${INTERNAL_API_KEY}`,
         'Content-Type': 'application/json',
       },
     });

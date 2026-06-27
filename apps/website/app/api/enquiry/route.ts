@@ -24,9 +24,9 @@ export async function POST(request: Request) {
     const { name, email, productInterest, message } = result.data;
 
     // Forward to Railway API
-    const apiUrl = process.env.API_URL;
+    const apiUrl = process.env.API_BASE_URL;
     if (!apiUrl) {
-      console.error("[Enquiry] API_URL not configured");
+      console.error("[Enquiry] API_BASE_URL not configured");
       return NextResponse.json(
         { success: false, error: "Service temporarily unavailable" },
         { status: 503 }
