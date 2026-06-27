@@ -1,13 +1,27 @@
 /**
  * Smoke-check: print every route registered on the central API app.
  *
- * This does NOT need a live Postgres. `db/client.ts` only constructs
- * a `pg.Pool` (lazy connection) and the route handlers are never
- * invoked. We only inspect Hono's internal router table to prove
- * `/waitlist` and `/enquiries` are mounted.
+ * What this script does:
+ *   - Imports Hono's `app` instance and reads its internal router
+ *     table to prove every required route (e.g. `/waitlist`,
+ *     `/enquiries`) is mounted. No handlers are invoked.
+ *
+ * Environment:
+ *   - Does NOT need a live Postgres or real credentials. `db/client.ts`
+ *     only constructs a `pg.Pool` (lazy connection) and the route
+ *     handlers are never invoked, so no connection is ever opened.
+ *   - DOES need placeholder env vars because `src/env.ts` validates
+ *     env on import (zod schema, fail-fast). The following three vars
+ *     are required by `env.ts` and must be supplied (any non-empty
+ *     placeholder is fine — they are never used to connect anywhere):
+ *       - DATABASE_URL     (must start with `postgres://` or `postgresql://`)
+ *       - SESSION_SECRET   (any non-blank string)
+ *       - INTERNAL_API_KEY (any non-blank string)
  *
  * Usage:
- *   DATABASE_URL=... SESSION_SECRET=... INTERNAL_API_KEY=... \
+ *   DATABASE_URL=postgres://test:test@localhost:5432/test \
+ *     SESSION_SECRET=test-session-secret \
+ *     INTERNAL_API_KEY=test-internal-key \
  *     pnpm --filter @printsbytee/api exec tsx scripts/smoke-check-routes.ts
  */
 import { app } from '../src/app.js';
