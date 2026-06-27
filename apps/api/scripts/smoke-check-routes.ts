@@ -73,6 +73,10 @@ for (const r of flat) {
 // I25 adds two sale routes: POST /batch-items/:id/sale (mounted on
 // `batchItemsRouter`) and DELETE /sales/:id (mounted on a new
 // `salesRouter`). Both must be present, in the documented paths.
+//
+// I22 adds one owner-gated upload route: POST /uploads (mounted on
+// a new `uploadsRouter`). Asserting it here catches the case where
+// a future refactor drops the route or renames the mount point.
 const required: Array<[string, string]> = [
   ['POST', '/waitlist'],
   ['POST', '/enquiries'],
@@ -92,6 +96,7 @@ const required: Array<[string, string]> = [
   ['DELETE', '/batch-items/:id'],
   ['POST', '/batch-items/:id/sale'],
   ['DELETE', '/sales/:id'],
+  ['POST', '/uploads'],
 ];
 
 let failed = 0;
