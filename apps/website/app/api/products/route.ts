@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 // In production, clients should use @/lib/api-client directly
 export async function GET() {
   try {
-    const API_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
+    const API_URL = process.env.API_BASE_URL;
     const API_KEY = process.env.INTERNAL_API_KEY ?? '';
 
     const response = await fetch(`${API_URL}/products`, {

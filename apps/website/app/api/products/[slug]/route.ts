@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const API_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
+    const API_URL = process.env.API_BASE_URL;
     const API_KEY = process.env.INTERNAL_API_KEY ?? '';
 
     const response = await fetch(`${API_URL}/products/${slug}`, {

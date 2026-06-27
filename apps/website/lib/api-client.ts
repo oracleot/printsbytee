@@ -8,7 +8,7 @@
 
 import type { ProductWithStock } from '@printsbytee/shared';
 
-const API_BASE_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:3001';
+const API_BASE_URL = process.env.API_BASE_URL;
 const API_KEY = process.env.INTERNAL_API_KEY ?? '';
 
 export interface ProductListFilters {
