@@ -8,19 +8,23 @@ Agent Worktrees").
 
 ## Coordinates (already reserved, do not reuse)
 
-| Issue | Branch | Worktree path | Owning agent |
-|---|---|---|---|
-| I23 | `feat/i23-batch-crud-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i23` | `senior-api` |
-| I24 | `feat/i24-batch-items-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i24` | `senior-api` |
-| I25 | `feat/i25-sales-transactional-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i25` | `senior-api` |
+| Issue | Branch | Worktree path | Owning agent | Status |
+|---|---|---|---|---|
+| I23 | `feat/i23-batch-crud-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i23` | `senior-api` | ✅ shipped (PR #69 merged @ 5103b02) |
+| I24 | `feat/i24-batch-items-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i24` | `senior-api` | ✅ shipped (PR #72 merged @ 29ed6da) |
+| I25 | `feat/i25-sales-transactional-endpoints` | `/Users/damilolaoduronbi/Projects/printsbytee-i25` | `senior-api` | ✅ shipped (PR #74 merged @ 19c4aed) |
 
 All three branch from refreshed `origin/main` at dispatch time. They are
 *not* stacked — each PR merges independently off `main` once reviewed.
 
+**I23 / I24 / I25 chain closed as of 2026-06-27.** M4 (Operations API)
+write-side surface is complete pending I22 (uploads) — see "Next
+decisions" at the bottom of this file.
+
 ## Sequential gating
 
 ```
-I23 (this PR)  ──review/merge──▶  I24 (next PR)  ──review/merge──▶  I25 (final PR)
+I23 ✅  ──merge──▶  I24 ✅  ──merge──▶  I25 ✅  ──▶  ???
 ```
 
 I24's blockers include I23. I25's blockers include I24. The owner must
@@ -103,7 +107,7 @@ transactional endpoints".
 
 **PR title convention:** `feat(api): sale recording + undo as transactional endpoints (I25)`
 
-## Per-dispatch checklist (next session)
+## Per-dispatch checklist (used by I24 + I25 sessions, kept for the record)
 
 1. Confirm `main` is the current default branch and `git fetch origin main`
    returns nothing.
@@ -122,7 +126,7 @@ transactional endpoints".
 5. Agent pushes branch and opens PR via `gh pr create`. **Does not merge.**
 6. Owner reviews. Final Review Gate stands.
 
-## Why this is queued, not parallel
+## Why this was queued, not parallel
 
 Per `AGENTS.md` "Parallel Agent Worktrees", concurrent agents must each
 have their own worktree, branch, and PR. But I24 depends on I23's route
@@ -133,3 +137,31 @@ parallel would force the owner to merge-conflict three PRs at once and
 would defeat the per-issue review cadence.
 
 Sequencing them gives the owner one PR per review pass.
+
+## Next decisions (post I23–I25)
+
+Two routes forward, neither blocked by the chain just closed:
+
+### A. Dispatch I22 — `POST /uploads` (multipart, R2-backed)
+
+- **Why:** Closes M4 fully. The plan lists it as M4 / `senior-api`, blocked by
+  I03/I07/I20 (all done). Without I22, business-app image upload (I33)
+  has no backend to talk to.
+- **Branch / worktree:** `feat/i22-uploads-r2` rooted at
+  `/Users/damilolaoduronbi/Projects/printsbytee-i22`.
+- **Risk:** Touches streaming + multipart parsing + S3 client. Bigger
+  than the average endpoint.
+- **Spec:** `docs/api-surface.md` Uploads section + `docs/plan.md` § I22.
+
+### B. Move to M5 — business-app side (I28–I33)
+
+- **Why:** M5 ships the owner-facing workflows that consume the M4
+  endpoints. I26 ✅, I27 ✅ already in. Remaining: I28 (dashboard),
+  I29 (batch list/detail), I30 (batch create/edit), I31 (item mgmt),
+  I32 (sale recording UI), I33 (product catalog CRUD with upload).
+- **Owning agents:** `senior-fe` for I28/I29/I33; `junior-fe` for
+  I30/I31/I32. Each in its own worktree.
+- **Risk:** I33 is gated on I22 (uploads). All others are unblocked.
+- **Spec:** `docs/plan.md` § I28–I33 + the business-app README.
+
+The owner picks. Until told otherwise, no new dispatch is queued.
