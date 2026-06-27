@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import { productsRouter } from './products/index.js';
 import { batchesRouter } from './batches/index.js';
+import { batchItemsRouter } from './batch-items/index.js';
 import { authApp } from './auth.js';
 import { waitlistApp } from './waitlist.js';
 import { enquiriesApp } from './enquiries.js';
@@ -16,13 +17,17 @@ import { enquiriesApp } from './enquiries.js';
  * top-level app — see `app.ts`.
  *
  * Currently mounted:
- *   /products   — public catalog reads (I12)
- *   /batches    — owner-only batch CRUD with computed totals (I23)
- *   /auth       — owner login / session (I20)
- *   /waitlist   — public POST join (I15)
- *   /enquiries  — public POST submit (I16)
+ *   /products     — public catalog reads (I12)
+ *   /batches      — owner-only batch CRUD with computed totals (I23),
+ *                    plus the batch-scoped batch-item routes
+ *                    (GET/POST /batches/:id/items, I24)
+ *   /batch-items  — owner-only by-id batch-item routes
+ *                    (PATCH/DELETE /batch-items/:id, I24)
+ *   /auth         — owner login / session (I20)
+ *   /waitlist     — public POST join (I15)
+ *   /enquiries    — public POST submit (I16)
  *
- * Later issues (I24 items, I25 sales, …) will add their own
+ * Later issues (I25 sales, …) will add their own
  * `routes.route('/...', ...)` lines here. That is expected — the
  * owner resolves conflicts across parallel branches at merge time.
  */
@@ -30,6 +35,7 @@ export const routes = new Hono();
 
 routes.route('/products', productsRouter);
 routes.route('/batches', batchesRouter);
+routes.route('/batch-items', batchItemsRouter);
 routes.route('/auth', authApp);
 routes.route('/waitlist', waitlistApp);
 routes.route('/enquiries', enquiriesApp);
