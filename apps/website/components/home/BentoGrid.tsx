@@ -52,7 +52,7 @@ function BentoCard({ item, index }: { item: BentoItem; index: number }) {
           className={`relative h-full ${minHeight} rounded-xl overflow-hidden transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl ${innerLayout}`}
         >
           {/* Product Image or Gradient */}
-          {item.imageKey.startsWith("/") ? (
+          {item.imageKey.match(/^(\/|https?:)/) ? (
             <Image
               src={item.imageKey}
               alt={item.name}
