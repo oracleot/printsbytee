@@ -45,7 +45,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
               <Link href={`/products/${product.slug}`} className="group block">
                 {/* Product Image */}
                 <div className="relative aspect-[3/4] rounded-lg overflow-hidden mb-4 group-hover:shadow-xl transition-shadow duration-300">
-                  {product.images?.[0]?.startsWith("/") ?? false ? (
+                  {product.images?.[0]?.match(/^(\/|https?:)/) ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
