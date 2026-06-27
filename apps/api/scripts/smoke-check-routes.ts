@@ -60,6 +60,10 @@ for (const r of flat) {
 // them here catches the case where a future refactor splits the
 // products router into a sub-directory and silently drops one of the
 // methods (e.g. `patch` becomes a typo for `put`).
+//
+// I23 adds the full batch CRUD surface (one read-one, one list, one
+// create, one update, one delete). Asserting all five guards against
+// a future split that silently drops a method.
 const required: Array<[string, string]> = [
   ['POST', '/waitlist'],
   ['POST', '/enquiries'],
@@ -68,6 +72,11 @@ const required: Array<[string, string]> = [
   ['POST', '/products'],
   ['PATCH', '/products/:id'],
   ['DELETE', '/products/:id'],
+  ['GET', '/batches'],
+  ['POST', '/batches'],
+  ['GET', '/batches/:id'],
+  ['PATCH', '/batches/:id'],
+  ['DELETE', '/batches/:id'],
 ];
 
 let failed = 0;
