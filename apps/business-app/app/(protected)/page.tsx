@@ -1,101 +1,108 @@
 /**
- * Protected home page — server component.
+ * Dashboard — server component.
  *
- * This page is only reached when the `(protected)/layout.tsx` auth gate
- * has verified a valid session. It shows:
- * - A welcome message confirming the owner is authenticated
- * - A "Manage products" card linking to /products
- * - The API health-check card (preserved from the I26 scaffold)
+ * Shows the business overview with:
+ * - KPI cards (batches count, expected profit, profit so far)
+ * - Recent batches list
+ * - Profit overview card
  *
- * The sign-out button lives in the protected layout's top bar.
+ * The auth gate in (protected)/layout.tsx ensures a valid session.
  */
 
-import type { HealthResponse } from "@printsbytee/shared";
-import { apiBaseUrl } from "@/lib/api-server";
-import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
+import type { Metadata } from "next";
+import { getJson } from "@/lib/api-server";
+import { readSessionCookie } from "@/lib/auth-cookie";
+import { cookies } from "next/headers";
+import type { ProductionBatch } from "@printsbytee/shared";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { BatchesSummary } from "@/components/dashboard/batches-summary";
+import { ProfitOverview } from "@/components/dashboard/profit-overview";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { PackageIcon, TrendingUpIcon, DollarSignIcon } from "lucide-react";
+import type { DashboardData, DashboardTotals } from "@/app/api/dashboard/route";
 
 export const dynamic = "force-dynamic";
 
-function isHealthResponse(value: unknown): value is HealthResponse {
-  return typeof value === "object" && value !== null && "status" in value && value.status === "ok";
+export const metadata: Metadata = {
+  title: "Dashboard — PrintsbyTee Business",
+};
+
+function formatCurrency(pence: number): string {
+  return `£${(pence / 100).toFixed(2)}`;
 }
 
-async function getHealthStatus(): Promise<{
-  apiBaseUrl: string;
-  health?: HealthResponse;
-  error?: string;
-}> {
-  const baseUrl = apiBaseUrl();
+async function getDashboardData(): Promise<{
+  batches: ProductionBatch[];
+  totals: DashboardTotals;
+} | null> {
+  const cookieStore = await cookies();
+  const sessionValue = readSessionCookie(cookieStore);
+  if (!sessionValue) return null;
 
-  try {
-    const response = await fetch(`${baseUrl}/health`, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`Health check failed with status ${response.status}.`);
-    }
+  const cookie = `printsbytee_session=${sessionValue}`;
+  const result = await getJson<DashboardData>("/api/dashboard", cookie);
 
-    const data: unknown = await response.json();
-    if (!isHealthResponse(data)) {
-      throw new Error("Health check returned an unexpected response shape.");
-    }
-
-    return { apiBaseUrl: baseUrl, health: data };
-  } catch (err) {
-    return {
-      apiBaseUrl: baseUrl,
-      error: err instanceof Error ? err.message : "Unknown error while calling /health.",
-    };
+  if (!result.ok || result.status === 401) {
+    return null;
   }
+
+  return result.data;
 }
 
-export default async function HomePage() {
-  const { apiBaseUrl, health, error } = await getHealthStatus();
+export default async function DashboardPage() {
+  const data = await getDashboardData();
+
+  // Show loading skeleton while checking auth
+  if (data === null) {
+    return <DashboardSkeleton />;
+  }
+
+  const { batches, totals } = data;
 
   return (
-    <section className="w-full max-w-3xl space-y-8">
-      {/* Welcome card */}
-      <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">I27 auth</p>
-        <h1 className="mt-3 text-4xl font-heading text-balance">Welcome to the business app</h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          You are signed in. Use the top bar to sign out, or check the API health below.
+    <div className="w-full space-y-8">
+      {/* Page header */}
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">
+          Overview
+        </p>
+        <h1 className="mt-2 text-3xl font-heading font-bold">Dashboard</h1>
+        <p className="mt-1 text-muted-foreground">
+          Track your production batches and sales performance.
         </p>
       </div>
 
-      {/* Manage products card */}
-      <Link
-        href="/products"
-        className="group block rounded-3xl border border-border bg-card p-8 shadow-sm transition-colors hover:border-primary/30 hover:bg-card/80"
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">I33 catalog</p>
-        <h2 className="mt-3 text-3xl font-heading text-balance group-hover:text-primary">
-          Manage products
-        </h2>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          Browse, create, edit, and delete products in your catalog.
-        </p>
-        <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
-          Go to products
-          <ArrowRightIcon className="transition-transform group-hover:translate-x-1" />
-        </div>
-      </Link>
-
-      {/* Health check card */}
-      <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">API health</p>
-        <dl className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-background p-4">
-            <dt className="text-sm font-medium text-muted-foreground">API base URL</dt>
-            <dd className="mt-2 break-all text-sm">{apiBaseUrl}</dd>
-          </div>
-          <div className="rounded-2xl border border-border bg-background p-4">
-            <dt className="text-sm font-medium text-muted-foreground">/health response</dt>
-            <dd className="mt-2 text-sm">
-              {health ? JSON.stringify(health) : error ?? "Not available"}
-            </dd>
-          </div>
-        </dl>
+      {/* KPI Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <KpiCard
+          label="Total Batches"
+          value={String(totals.batchCount)}
+          description={`${totals.totalItems} items total`}
+          icon={PackageIcon}
+        />
+        <KpiCard
+          label="Expected Profit"
+          value={formatCurrency(totals.expectedProfit)}
+          description="At full sell-through"
+          icon={TrendingUpIcon}
+        />
+        <KpiCard
+          label="Profit So Far"
+          value={formatCurrency(totals.profitSoFar)}
+          description={
+            totals.expectedProfit > 0
+              ? `${Math.round((totals.profitSoFar / totals.expectedProfit) * 100)}% realized`
+              : "No sales yet"
+          }
+          icon={DollarSignIcon}
+        />
       </div>
-    </section>
+
+      {/* Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <BatchesSummary batches={batches} />
+        <ProfitOverview totals={totals} batchCount={totals.batchCount} />
+      </div>
+    </div>
   );
 }
