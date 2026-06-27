@@ -22,8 +22,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@printsbytee/shared": ["../../packages/shared/src"],
-      "@printsbytee/shared/*": ["../../packages/shared/src/*"]
+      "@printsbytee/shared": ["../../packages/shared/dist"],
+      "@printsbytee/shared/*": ["../../packages/shared/dist/*"]
     }
   },
   "include": [
