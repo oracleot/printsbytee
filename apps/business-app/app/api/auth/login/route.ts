@@ -76,10 +76,11 @@ export async function POST(request: Request) {
 
   const nextResponse = NextResponse.json(responseBody, { status: 200 });
   if (setCookieHeader) {
-    // Forward the exact Set-Cookie value the API generated
-    nextResponse.headers.set("Set-Cookie", setSessionCookieFromApi(
-      setCookieHeader.split(";")[0] ?? "" // strip cookie attributes, keep only name=value
-    ));
+    // The API already returns `printsbytee_session=<token>; ...`.
+    // Extract just the opaque token before forwarding it as the
+    // business-app cookie value.
+    const cookieValue = setCookieHeader.split(";")[0]?.split("=").slice(1).join("=") ?? "";
+    nextResponse.headers.set("Set-Cookie", setSessionCookieFromApi(cookieValue));
   }
 
   return nextResponse;
