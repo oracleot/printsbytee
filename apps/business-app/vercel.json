@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm -r build --filter business-app",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "rootDirectory": "apps/business-app"
+  "framework": "nextjs"
 }
