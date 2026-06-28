@@ -14,7 +14,7 @@ import type { Context } from 'hono';
 
 import { eq } from 'drizzle-orm';
 
-import { ErrorResponseSchema, SaleSchema } from '@printsbytee/shared';
+import { SaleSchema } from '@printsbytee/shared';
 
 import { db } from '../../../db/client.js';
 import { batchItems, sales } from '../../../db/schema/batches.js';

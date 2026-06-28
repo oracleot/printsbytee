@@ -18,39 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { isoToLocalDatetimeLocal, localDatetimeLocalToIso } from "@/lib/datetime-local";
 
 interface SaleFormProps {
   item: BatchItem;
   onSuccess: () => void;
   onCancel: () => void;
-}
-
-/**
- * Convert an ISO UTC timestamp string to the `datetime-local` input format
- * (`YYYY-MM-DDTHH:mm`) in the browser's local timezone.
- */
-function isoToLocalDatetimeLocal(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return (
-    d.getFullYear() +
-    '-' +
-    pad(d.getMonth() + 1) +
-    '-' +
-    pad(d.getDate()) +
-    'T' +
-    pad(d.getHours()) +
-    ':' +
-    pad(d.getMinutes())
-  );
-}
-
-/**
- * Convert a `datetime-local` input value (`YYYY-MM-DDTHH:mm` in local time)
- * back to an ISO UTC string for submission to the API.
- */
-function localDatetimeLocalToIso(local: string): string {
-  return new Date(local).toISOString();
 }
 
 export function SaleForm({ item, onSuccess, onCancel }: SaleFormProps) {
