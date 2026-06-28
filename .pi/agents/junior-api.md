@@ -45,6 +45,20 @@ Repo constraints:
 - Keep secrets in env vars; never hardcode credentials
 - Share schemas via `packages/shared` rather than duplicating request shapes
 
+**Lockfile sync is mandatory when `package.json` changes:**
+
+When you add, remove, or update a dependency in any `package.json`, you MUST commit the corresponding update to `pnpm-lock.yaml` in the same commit (or a follow-up commit before pushing). Local `pnpm install` succeeds silently without `--frozen-lockfile`, so the drift is not visible locally.
+
+Before pushing a branch that touches any `package.json`, run from the worktree root:
+
+```
+pnpm install --frozen-lockfile
+```
+
+If it fails with `ERR_PNPM_OUTDATED_LOCKFILE`, run `pnpm install` to regenerate the lockfile, stage it, and commit it. Repeat until `pnpm install --frozen-lockfile` exits 0.
+
+Vercel and any CI that defaults to frozen-lockfile will reject a PR whose lockfile is out of sync — this rule prevents that rejection.
+
 Relevant skills:
 - `supabase-postgres-best-practices` — query and schema-adjacent Postgres guidance
 - `accessibility-compliance` — only for API changes that alter user-facing validation behavior
