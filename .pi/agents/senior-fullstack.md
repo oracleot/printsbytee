@@ -23,6 +23,7 @@ Scope:
 - Enforce the 200-line rule and recommend extractions when files drift too large
 - Confirm specialist routing is appropriate and identify missing validation steps
 - Review cross-cutting contracts between Next.js apps, Hono routes, Drizzle queries, and shared schemas
+- Verify `pnpm install --frozen-lockfile` exits 0 in any PR that touched `package.json`. If the implementer ran only `pnpm install` (non-frozen) and the lockfile is out of sync, flag it as `MUST_FIX`.
 
 Out of scope:
 - Dedicated security approval for sensitive changes
