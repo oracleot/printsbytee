@@ -8,11 +8,13 @@
  * The auth gate in (protected)/layout.tsx ensures a valid session.
  */
 
+import Link from "next/link";
 import { cookies } from "next/headers";
 import type { ProductionBatch } from "@printsbytee/shared";
 import { getJson } from "@/lib/api-server";
 import { readSessionCookie } from "@/lib/auth-cookie";
 import { BatchList } from "@/components/batches/batch-list";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,9 @@ export default async function BatchesPage() {
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Batches</h1>
+        <Link href="/batches/new">
+          <Button>New batch</Button>
+        </Link>
       </div>
 
       <BatchList batches={batches} />

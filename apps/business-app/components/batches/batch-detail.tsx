@@ -4,16 +4,18 @@
  * Shows cost breakdown, revenue figures, profit/loss, and item table.
  */
 
-import type { ProductionBatchWithTotals, BatchItem } from "@printsbytee/shared";
+import type { ProductionBatchWithTotals, BatchItem, Product } from "@printsbytee/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { BatchItemsTable } from "./batch-items-table";
+import { AddBatchItemsDialog } from "./add-batch-items-dialog";
 
 interface BatchDetailProps {
   batch: ProductionBatchWithTotals;
   items: BatchItem[];
+  products: Product[];
 }
 
 function formatPrice(pence: number): string {
@@ -30,7 +32,7 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function BatchDetail({ batch, items }: BatchDetailProps) {
+export function BatchDetail({ batch, items, products }: BatchDetailProps) {
   const { productionCost, marketingCost } = batch;
   const totalCost =
     productionCost.materials +
@@ -42,18 +44,26 @@ export function BatchDetail({ batch, items }: BatchDetailProps) {
   return (
     <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/batches" aria-label="Back to batches">
-          <Button variant="outline" size="icon" aria-label="Back to batches">
-            <ArrowLeftIcon />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/batches" aria-label="Back to batches">
+            <Button variant="outline" size="icon" aria-label="Back to batches">
+              <ArrowLeftIcon />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="font-heading text-2xl font-bold">{batch.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              Created {formatDate(batch.createdAt)}
+            </p>
+          </div>
+        </div>
+        <Link href={`/batches/${batch.id}/edit`}>
+          <Button variant="outline" size="sm">
+            <PencilIcon className="mr-2 h-4 w-4" />
+            Edit batch
           </Button>
         </Link>
-        <div>
-          <h1 className="font-heading text-2xl font-bold">{batch.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            Created {formatDate(batch.createdAt)}
-          </p>
-        </div>
       </div>
 
       {/* Totals summary cards */}
@@ -164,8 +174,9 @@ export function BatchDetail({ batch, items }: BatchDetailProps) {
 
       {/* Items list */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>Batch items ({items.length})</CardTitle>
+          <AddBatchItemsDialog batchId={batch.id} products={products} />
         </CardHeader>
         <CardContent>
           <BatchItemsTable items={items} />

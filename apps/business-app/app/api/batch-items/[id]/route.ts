@@ -1,14 +1,17 @@
 /**
- * PATCH /api/batches/[id] — proxy to PATCH /batches/:id (update a batch, requires session)
+ * PATCH /api/batch-items/[id] — proxy to PATCH /batch-items/:id (update item)
+ * DELETE /api/batch-items/[id] — proxy to DELETE /batch-items/:id (remove item)
  */
 
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { cookies } from "next/headers";
-import { UpdateBatchRequestSchema } from "@printsbytee/shared";
+import { UpdateBatchItemRequestSchema } from "@printsbytee/shared";
 import { apiBaseUrl } from "@/lib/api-server";
 import { readSessionCookie } from "@/lib/auth-cookie";
 import { parseUuid } from "@/lib/uuid";
+
+// ── PATCH /api/batch-items/[id] ────────────────────────────────────────
 
 export async function PATCH(
   request: Request,
@@ -16,11 +19,9 @@ export async function PATCH(
 ) {
   const { id } = await params;
 
-  // Validate UUID
   const uuid = parseUuid(id);
   if (!uuid.ok) return uuid.response;
 
-  // Parse body
   let body: unknown;
   try {
     body = await request.json();
@@ -31,10 +32,9 @@ export async function PATCH(
     );
   }
 
-  // Validate
   let parsed: unknown;
   try {
-    parsed = UpdateBatchRequestSchema.parse(body);
+    parsed = UpdateBatchItemRequestSchema.parse(body);
   } catch (err) {
     const issues =
       err instanceof ZodError
@@ -46,7 +46,6 @@ export async function PATCH(
     );
   }
 
-  // Read cookie
   const cookieStore = await cookies();
   const sessionValue = readSessionCookie(cookieStore);
   if (!sessionValue) {
@@ -56,8 +55,7 @@ export async function PATCH(
     );
   }
 
-  // Server-side fetch
-  const apiUrl = `${apiBaseUrl()}/batches/${id}`;
+  const apiUrl = `${apiBaseUrl()}/batch-items/${id}`;
   let apiResponse: Response;
   try {
     apiResponse = await fetch(apiUrl, {
@@ -73,6 +71,50 @@ export async function PATCH(
       { error: { code: "INTERNAL_ERROR", message: "Batch service unavailable" } },
       { status: 502 }
     );
+  }
+
+  const responseBody = await apiResponse.json().catch(() => ({}));
+  return NextResponse.json(responseBody, { status: apiResponse.status });
+}
+
+// ── DELETE /api/batch-items/[id] ──────────────────────────────────────
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  const uuid = parseUuid(id);
+  if (!uuid.ok) return uuid.response;
+
+  const cookieStore = await cookies();
+  const sessionValue = readSessionCookie(cookieStore);
+  if (!sessionValue) {
+    return NextResponse.json(
+      { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+      { status: 401 }
+    );
+  }
+
+  const apiUrl = `${apiBaseUrl()}/batch-items/${id}`;
+  let apiResponse: Response;
+  try {
+    apiResponse = await fetch(apiUrl, {
+      method: "DELETE",
+      headers: {
+        Cookie: `printsbytee_session=${sessionValue}`,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message: "Batch service unavailable" } },
+      { status: 502 }
+    );
+  }
+
+  if (apiResponse.status === 204) {
+    return new NextResponse(null, { status: 204 });
   }
 
   const responseBody = await apiResponse.json().catch(() => ({}));
