@@ -4,16 +4,18 @@
  * Shows cost breakdown, revenue figures, profit/loss, and item table.
  */
 
-import type { ProductionBatchWithTotals, BatchItem } from "@printsbytee/shared";
+import type { ProductionBatchWithTotals, BatchItem, Product } from "@printsbytee/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeftIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { BatchItemsTable } from "./batch-items-table";
+import { AddBatchItemsDialog } from "./add-batch-items-dialog";
 
 interface BatchDetailProps {
   batch: ProductionBatchWithTotals;
   items: BatchItem[];
+  products: Product[];
 }
 
 function formatPrice(pence: number): string {
@@ -30,7 +32,7 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function BatchDetail({ batch, items }: BatchDetailProps) {
+export function BatchDetail({ batch, items, products }: BatchDetailProps) {
   const { productionCost, marketingCost } = batch;
   const totalCost =
     productionCost.materials +
@@ -172,8 +174,9 @@ export function BatchDetail({ batch, items }: BatchDetailProps) {
 
       {/* Items list */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>Batch items ({items.length})</CardTitle>
+          <AddBatchItemsDialog batchId={batch.id} products={products} />
         </CardHeader>
         <CardContent>
           <BatchItemsTable items={items} />

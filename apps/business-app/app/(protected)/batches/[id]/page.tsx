@@ -1,14 +1,18 @@
 /**
  * Batch detail page — Server Component.
  *
- * Fetches the batch with computed totals and its items from the API.
- * Shows 404 if the batch is not found.
+ * Fetches the batch with computed totals, its items, and the products list
+ * (for the "Add items" dialog). Shows 404 if the batch is not found.
  */
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import type { ProductionBatchWithTotals, BatchItem } from "@printsbytee/shared";
+import type {
+  ProductionBatchWithTotals,
+  BatchItem,
+  Product,
+} from "@printsbytee/shared";
 import { getJson } from "@/lib/api-server";
 import { readSessionCookie } from "@/lib/auth-cookie";
 import { BatchDetail } from "@/components/batches/batch-detail";
@@ -38,8 +42,6 @@ async function findBatch(
 
   const result = await getJson<ProductionBatchWithTotals>(`/batches/${id}`, cookie);
 
-  // 404 is the only "this batch does not exist" outcome — surface it via notFound().
-  // Any other failure is a real error and should reach the route-level boundary.
   if (result.ok && result.status === 404) return null;
   if (!result.ok) {
     if ("error" in result) {
@@ -51,9 +53,7 @@ async function findBatch(
   return result.data;
 }
 
-async function findBatchItems(
-  id: string
-): Promise<BatchItem[]> {
+async function findBatchItems(id: string): Promise<BatchItem[]> {
   const cookieStore = await cookies();
   const sessionValue = readSessionCookie(cookieStore);
   const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
@@ -70,11 +70,24 @@ async function findBatchItems(
   return result.data;
 }
 
+async function findProducts(): Promise<Product[]> {
+  const cookieStore = await cookies();
+  const sessionValue = readSessionCookie(cookieStore);
+  const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
+
+  const result = await getJson<Product[]>("/products", cookie);
+  return result.ok && result.status === 200 ? result.data : [];
+}
+
 export default async function BatchDetailPage({ params }: BatchDetailPageProps) {
   const { id } = await params;
-  const [batch, items] = await Promise.all([findBatch(id), findBatchItems(id)]);
+  const [batch, items, products] = await Promise.all([
+    findBatch(id),
+    findBatchItems(id),
+    findProducts(),
+  ]);
 
   if (!batch) notFound();
 
-  return <BatchDetail batch={batch} items={items} />;
+  return <BatchDetail batch={batch} items={items} products={products} />;
 }

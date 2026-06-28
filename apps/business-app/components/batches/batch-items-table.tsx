@@ -1,7 +1,5 @@
 /**
- * Batch items table — displays items in a batch with status badges.
- *
- * Shows item ID, status, and planned sale price.
+ * Batch items table — displays items in a batch with status badges and row actions.
  */
 
 import type { BatchItem } from "@printsbytee/shared";
@@ -13,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { BatchItemStatusBadge } from "./batch-item-status-badge";
+import { BatchItemActions } from "./batch-item-actions";
 
 interface BatchItemsTableProps {
   items: BatchItem[];
@@ -21,15 +20,6 @@ interface BatchItemsTableProps {
 
 function formatPrice(pence: number): string {
   return `£${(pence / 100).toFixed(2)}`;
-}
-
-function StatusBadge({ status }: { status: BatchItem["status"] }) {
-  const variants: Record<BatchItem["status"], "success" | "destructive" | "secondary"> = {
-    sellable: "secondary",
-    sold: "success",
-    faulty: "destructive",
-  };
-  return <Badge variant={variants[status]}>{status}</Badge>;
 }
 
 function truncateId(id: string): string {
@@ -53,6 +43,7 @@ export function BatchItemsTable({ items }: BatchItemsTableProps) {
             <TableHead>ID</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Planned price</TableHead>
+            <TableHead aria-label="Actions" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -62,10 +53,13 @@ export function BatchItemsTable({ items }: BatchItemsTableProps) {
                 {truncateId(item.id)}
               </TableCell>
               <TableCell>
-                <StatusBadge status={item.status} />
+                <BatchItemStatusBadge status={item.status} />
               </TableCell>
               <TableCell className="text-right font-medium">
                 {formatPrice(item.plannedSalePrice)}
+              </TableCell>
+              <TableCell>
+                <BatchItemActions item={item} />
               </TableCell>
             </TableRow>
           ))}
