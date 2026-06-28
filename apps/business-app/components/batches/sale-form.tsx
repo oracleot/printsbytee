@@ -25,6 +25,34 @@ interface SaleFormProps {
   onCancel: () => void;
 }
 
+/**
+ * Convert an ISO UTC timestamp string to the `datetime-local` input format
+ * (`YYYY-MM-DDTHH:mm`) in the browser's local timezone.
+ */
+function isoToLocalDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    d.getFullYear() +
+    '-' +
+    pad(d.getMonth() + 1) +
+    '-' +
+    pad(d.getDate()) +
+    'T' +
+    pad(d.getHours()) +
+    ':' +
+    pad(d.getMinutes())
+  );
+}
+
+/**
+ * Convert a `datetime-local` input value (`YYYY-MM-DDTHH:mm` in local time)
+ * back to an ISO UTC string for submission to the API.
+ */
+function localDatetimeLocalToIso(local: string): string {
+  return new Date(local).toISOString();
+}
+
 export function SaleForm({ item, onSuccess, onCancel }: SaleFormProps) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -106,7 +134,11 @@ export function SaleForm({ item, onSuccess, onCancel }: SaleFormProps) {
             <FormItem>
               <FormLabel>Sale date & time</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <Input
+                  type="datetime-local"
+                  value={isoToLocalDatetimeLocal(String(field.value ?? ''))}
+                  onChange={(e) => field.onChange(localDatetimeLocalToIso(e.target.value))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

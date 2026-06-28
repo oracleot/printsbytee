@@ -24,10 +24,9 @@ import { RotateCcwIcon } from "lucide-react";
 
 interface UndoSaleButtonProps {
   saleId: string;
-  trigger?: React.ReactNode;
 }
 
-export function UndoSaleButton({ saleId, trigger }: UndoSaleButtonProps) {
+export function UndoSaleButton({ saleId }: UndoSaleButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [undoing, setUndoing] = useState(false);
@@ -62,16 +61,10 @@ export function UndoSaleButton({ saleId, trigger }: UndoSaleButtonProps) {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        render={
-          (trigger as React.ReactElement) ?? (
-            <Button variant="ghost" size="xs" className="text-destructive">
-              <RotateCcwIcon className="mr-1 h-3 w-3" />
-              Undo sale
-            </Button>
-          )
-        }
-      />
+      <AlertDialogTrigger render={<Button variant="ghost" size="xs" className="text-destructive">
+          <RotateCcwIcon className="mr-1 h-3 w-3" />
+          Undo sale
+        </Button>} />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Undo this sale?</AlertDialogTitle>

@@ -22,24 +22,17 @@ import { SaleForm } from "./sale-form";
 
 interface RecordSaleDialogProps {
   item: BatchItem;
-  trigger?: React.ReactNode;
 }
 
-export function RecordSaleDialog({ item, trigger }: RecordSaleDialogProps) {
+export function RecordSaleDialog({ item }: RecordSaleDialogProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          (trigger as React.ReactElement) ?? (
-            <Button variant="outline" size="xs">
-              <DollarSignIcon className="mr-1 h-3 w-3" />
-              Record sale
-            </Button>
-          )
-        }
-      />
+      <DialogTrigger render={<Button variant="outline" size="xs">
+          <DollarSignIcon className="mr-1 h-3 w-3" />
+          Record sale
+        </Button>} />
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Record sale</DialogTitle>

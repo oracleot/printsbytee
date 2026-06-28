@@ -3,10 +3,10 @@
 /**
  * Batch items table (client) — displays items in a batch with status badges and sale actions.
  *
- * Fetches sale data for sold items and shows Record Sale / Undo Sale buttons.
+ * Receives `salesByItemId` as a prop (fetched server-side in page.tsx) so no
+ * client-side N+1 fetches are needed.
  */
 
-import { useEffect, useState } from "react";
 import type { BatchItem, Sale } from "@printsbytee/shared";
 import {
   Table,
@@ -23,7 +23,7 @@ import { SaleDetails } from "./sale-details";
 
 interface BatchItemsTableClientProps {
   items: BatchItem[];
-  soldItemIds: string[];
+  salesByItemId?: Map<string, Sale>;
 }
 
 function formatPrice(pence: number): string {
@@ -43,30 +43,7 @@ function truncateId(id: string): string {
   return id.slice(0, 8) + "…";
 }
 
-export function BatchItemsTableClient({ items, soldItemIds }: BatchItemsTableClientProps) {
-  const [sales, setSales] = useState<Map<string, Sale>>(new Map());
-  const soldItemIdsKey = soldItemIds.join(",");
-
-  useEffect(() => {
-    if (soldItemIdsKey === "") return;
-
-    Promise.allSettled(
-      soldItemIdsKey.split(",").map(async (itemId) => {
-        const res = await fetch(`/api/sales/by-batch-item/${itemId}`);
-        if (!res.ok) return null;
-        const sale = (await res.json()) as Sale;
-        return { itemId, sale };
-      })
-    ).then((results) => {
-      const newSales = new Map<string, Sale>();
-      for (const result of results) {
-        if (result.status === "fulfilled" && result.value) {
-          newSales.set(result.value.itemId, result.value.sale);
-        }
-      }
-      setSales(newSales);
-    });
-  }, [soldItemIdsKey]);
+export function BatchItemsTableClient({ items, salesByItemId = new Map() }: BatchItemsTableClientProps) {
 
   if (items.length === 0) {
     return (
@@ -90,7 +67,7 @@ export function BatchItemsTableClient({ items, soldItemIds }: BatchItemsTableCli
         </TableHeader>
         <TableBody>
           {items.map((item) => {
-            const sale = sales.get(item.id);
+            const sale = salesByItemId.get(item.id);
             return (
               <TableRow key={item.id}>
                 <TableCell className="font-mono text-xs text-muted-foreground">

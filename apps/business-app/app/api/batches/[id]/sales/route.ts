@@ -1,5 +1,5 @@
 /**
- * GET /api/sales/by-batch-item/[id] — proxy to GET /sales/by-batch-item/:id (get sale by item, requires session)
+ * GET /api/batches/[id]/sales — proxy to GET /batches/:id/sales (all sales for a batch, requires session)
  */
 
 import { NextResponse } from "next/server";
@@ -29,7 +29,7 @@ export async function GET(
   }
 
   // Server-side fetch
-  const apiUrl = `${apiBaseUrl()}/sales/by-batch-item/${id}`;
+  const apiUrl = `${apiBaseUrl()}/batches/${id}/sales`;
   let apiResponse: Response;
   try {
     apiResponse = await fetch(apiUrl, {

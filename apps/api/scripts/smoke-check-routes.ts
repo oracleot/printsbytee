@@ -95,6 +95,7 @@ const required: Array<[string, string]> = [
   ['PATCH', '/batch-items/:id'],
   ['DELETE', '/batch-items/:id'],
   ['POST', '/batch-items/:id/sale'],
+  ['GET', '/batches/:id/sales'],
   ['DELETE', '/sales/:id'],
   ['POST', '/uploads'],
 ];
