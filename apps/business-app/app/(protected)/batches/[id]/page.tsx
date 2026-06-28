@@ -12,6 +12,7 @@ import type {
   ProductionBatchWithTotals,
   BatchItem,
   Product,
+  Sale,
 } from "@printsbytee/shared";
 import { getJson } from "@/lib/api-server";
 import { readSessionCookie } from "@/lib/auth-cookie";
@@ -79,15 +80,37 @@ async function findProducts(): Promise<Product[]> {
   return result.ok && result.status === 200 ? result.data : [];
 }
 
+async function findBatchSales(id: string): Promise<Sale[]> {
+  const cookieStore = await cookies();
+  const sessionValue = readSessionCookie(cookieStore);
+  const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
+
+  const result = await getJson<Sale[]>(`/batches/${id}/sales`, cookie);
+  return result.ok && result.status === 200 ? result.data : [];
+}
+
 export default async function BatchDetailPage({ params }: BatchDetailPageProps) {
   const { id } = await params;
-  const [batch, items, products] = await Promise.all([
+  const [batch, items, products, sales] = await Promise.all([
     findBatch(id),
     findBatchItems(id),
     findProducts(),
+    findBatchSales(id),
   ]);
 
   if (!batch) notFound();
 
-  return <BatchDetail batch={batch} items={items} products={products} />;
+  // Build a lookup map from batchItemId → Sale for O(1) access in the table.
+  const salesByItemId = new Map<string, Sale>(
+    sales.map((s) => [s.batchItemId, s])
+  );
+
+  return (
+    <BatchDetail
+      batch={batch}
+      items={items}
+      products={products}
+      salesByItemId={salesByItemId}
+    />
+  );
 }

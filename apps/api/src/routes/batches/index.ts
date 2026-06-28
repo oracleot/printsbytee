@@ -6,6 +6,7 @@ import type { AppEnv } from '../../types.js';
 import { createBatch } from './handlers/create.js';
 import { deleteBatch } from './handlers/delete.js';
 import { getBatchById, listBatches } from './handlers/list.js';
+import { getBatchSales } from './handlers/get-sales.js';
 import { updateBatch } from './handlers/update.js';
 import { createBatchItems } from '../batch-items/handlers/create.js';
 import { listBatchItems } from '../batch-items/handlers/list.js';
@@ -78,5 +79,8 @@ batchesRouter.delete('/:id', requireSession, deleteBatch);
 // routes. Mounted inline so the path stays grouped under one router.
 batchesRouter.get('/:id/items', requireSession, listBatchItems);
 batchesRouter.post('/:id/items', requireSession, createBatchItems);
+
+// Batch-scoped sales (I32) — replaces the N+1 /sales/by-batch-item/:id fetches.
+batchesRouter.get('/:id/sales', requireSession, getBatchSales);
 
 export { batchesRouter };
