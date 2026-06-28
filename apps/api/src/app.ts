@@ -24,6 +24,31 @@ import { routes } from './routes/index.js';
  */
 export const app = new Hono();
 
+/**
+ * M6 LOW-1: Security headers middleware.
+ *
+ * Applied to every response from the API server:
+ * - X-Content-Type-Options: nosniff         — always (backend, not embedded in frames)
+ * - Referrer-Policy: strict-origin-when-cross-origin  — always
+ * - Strict-Transport-Security: production only (Vercel → Railway is HTTPS)
+ *
+ * X-Frame-Options is intentionally omitted — it is a browser directive
+ * that only applies when the response is rendered inside a <frame>, <iframe>,
+ * or <object>. The API never serves HTML and is not embedded in frames,
+ * so the header has no effect and is excluded per the audit recommendation.
+ */
+app.use("*", async (c, next) => {
+  await next();
+  c.res.headers.set("X-Content-Type-Options", "nosniff");
+  c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (env.NODE_ENV === "production") {
+    c.res.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains",
+    );
+  }
+});
+
 app.get('/health', (c) => {
   // Parse through the shared schema so the response shape is enforced
   // at runtime and stays in lockstep with @printsbytee/shared.
