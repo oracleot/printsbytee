@@ -42,6 +42,14 @@ export const BATCH_ITEM_HAS_SALE_MESSAGE =
 export const BATCH_ITEM_STATUS_SOLD_GUARD_MESSAGE =
   "Item status cannot be set to 'sold' directly; use the sale endpoint";
 
+/** Documented 409 message for `PATCH /batch-items/:id` when the body
+ *  tries to change the status of an already-sold item (i.e. one that
+ *  has a corresponding `sales` row). Symmetric to the existing
+ *  `status: 'sold'` guard — the API refuses both entering and leaving
+ *  the `sold` state via PATCH to keep the revenue record intact. */
+export const BATCH_ITEM_SOLD_STATUS_CHANGE_GUARD_MESSAGE =
+  'Cannot change status of a sold item — undo the sale first';
+
 /** Convert a `batch_items` row from the DB layer to the wire shape
  *  (dates → ISO). Mirrors the pattern in
  *  `apps/api/src/routes/batches/helpers.ts#toBatchDto` and
@@ -151,6 +159,55 @@ export function batchItemStatusSoldGuardResponse(
     }
   }
   return null;
+}
+
+// ── sold-item status-change guard (API-layer policy) ───────────────────
+
+/** Returns the documented 409 envelope when the request body tries to
+ *  change the status of an already-sold batch item (i.e. one with a
+ *  `sales` row). Returns `null` otherwise so the caller can proceed.
+ *
+ *  Symmetric to `batchItemStatusSoldGuardResponse`:
+ *    - that guard: refuse setting status → `sold` via PATCH
+ *    - this guard: refuse changing status away from `sold` via PATCH
+ *
+ *  The caller is responsible for looking up the current item state
+ *  (via `hasSale` or a JOIN) before calling this helper. */
+export function batchItemSoldStatusChangeGuardResponse(
+  body: unknown,
+  currentStatus: string,
+): Response | null {
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    Array.isArray(body)
+  ) {
+    return null;
+  }
+
+  const candidate = body as Record<string, unknown>;
+
+  // Only guard when the body actually contains a `status` field and
+  // the current status is `sold`. If the body omits `status` the
+  // PATCH is a no-op on that field and the existing status check is
+  // sufficient.
+  if (!('status' in candidate)) return null;
+  if (currentStatus !== 'sold') return null;
+
+  const newStatus = candidate.status;
+  if (newStatus === 'sold') return null; // already caught by the other guard
+
+  return new Response(
+    JSON.stringify(
+      ErrorResponseSchema.parse({
+        error: {
+          code: 'CONFLICT',
+          message: BATCH_ITEM_SOLD_STATUS_CHANGE_GUARD_MESSAGE,
+        },
+      }),
+    ),
+    { status: 409, headers: { 'content-type': 'application/json' } },
+  );
 }
 
 // ── hasSale probe ───────────────────────────────────────────────────────
