@@ -1,6 +1,8 @@
 /**
- * GET /api/batches — proxy to GET /batches (list with optional date filter)
- * POST /api/batches — proxy to POST /batches (create, requires session)
+ * GET /api/batches — proxy to GET /batches (list of production batches)
+ *
+ * NOTE: This route only proxies GET. The create-batch endpoint lives in
+ * the central API (`POST /batches`) and is wired through the I30 form.
  */
 
 import { NextResponse } from "next/server";

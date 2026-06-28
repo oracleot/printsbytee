@@ -37,8 +37,17 @@ async function findBatch(
   const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
 
   const result = await getJson<ProductionBatchWithTotals>(`/batches/${id}`, cookie);
-  if (!result.ok || result.status === 404) return null;
-  if (!result.ok) return null;
+
+  // 404 is the only "this batch does not exist" outcome — surface it via notFound().
+  // Any other failure is a real error and should reach the route-level boundary.
+  if (result.ok && result.status === 404) return null;
+  if (!result.ok) {
+    if ("error" in result) {
+      throw new Error(`Failed to load batch: ${result.message}`);
+    }
+    if (result.status === 404) return null;
+    throw new Error(`Failed to load batch (HTTP ${result.status})`);
+  }
   return result.data;
 }
 
@@ -50,8 +59,14 @@ async function findBatchItems(
   const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
 
   const result = await getJson<BatchItem[]>(`/batches/${id}/items`, cookie);
-  if (!result.ok || result.status === 404) return [];
-  if (!result.ok) return [];
+
+  if (!result.ok) {
+    if ("error" in result) {
+      throw new Error(`Failed to load batch items: ${result.message}`);
+    }
+    if (result.status === 404) return [];
+    throw new Error(`Failed to load batch items (HTTP ${result.status})`);
+  }
   return result.data;
 }
 

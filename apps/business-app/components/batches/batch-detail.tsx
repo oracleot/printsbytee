@@ -43,8 +43,8 @@ export function BatchDetail({ batch, items }: BatchDetailProps) {
     <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/batches">
-          <Button variant="outline" size="icon">
+        <Link href="/batches" aria-label="Back to batches">
+          <Button variant="outline" size="icon" aria-label="Back to batches">
             <ArrowLeftIcon />
           </Button>
         </Link>
@@ -68,7 +68,7 @@ export function BatchDetail({ batch, items }: BatchDetailProps) {
               {formatPrice(batch.totals.expectedRevenue)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {batch.totals.itemCount} items × avg price
+              Sum of planned prices across {batch.totals.itemCount} sellable/sold items
             </p>
           </CardContent>
         </Card>

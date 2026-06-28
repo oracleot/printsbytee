@@ -1,12 +1,15 @@
 /**
  * Batch list page — Server Component.
  *
- * Fetches all batches with computed totals from the API.
+ * Fetches all batches from the API. Totals (item count, revenue, profit)
+ * live on the detail page — the list view shows batch identity + cost
+ * only, matching the `ProductionBatch` contract returned by `GET /batches`.
+ *
  * The auth gate in (protected)/layout.tsx ensures a valid session.
  */
 
 import { cookies } from "next/headers";
-import type { ProductionBatchWithTotals } from "@printsbytee/shared";
+import type { ProductionBatch } from "@printsbytee/shared";
 import { getJson } from "@/lib/api-server";
 import { readSessionCookie } from "@/lib/auth-cookie";
 import { BatchList } from "@/components/batches/batch-list";
@@ -22,10 +25,21 @@ export default async function BatchesPage() {
   const sessionValue = readSessionCookie(cookieStore);
   const cookie = sessionValue ? `printsbytee_session=${sessionValue}` : undefined;
 
-  const result = await getJson<ProductionBatchWithTotals[]>("/batches", cookie);
+  const result = await getJson<ProductionBatch[]>("/batches", cookie);
 
-  const batches: ProductionBatchWithTotals[] =
-    result.ok && result.status === 200 ? result.data : [];
+  // Distinguish failures from the genuine empty state so the route-level
+  // error boundary can render the appropriate UI instead of a misleading
+  // "No batches yet" message.
+  if (!result.ok || result.status !== 200) {
+    if ("error" in result) {
+      throw new Error(`Failed to load batches: ${result.message}`);
+    }
+    throw new Error(
+      `Failed to load batches (HTTP ${result.status})`
+    );
+  }
+
+  const batches = result.data;
 
   return (
     <div className="w-full space-y-6">

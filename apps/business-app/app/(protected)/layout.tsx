@@ -59,8 +59,8 @@ export default async function ProtectedLayout({
   return (
     <div className="flex min-h-screen flex-col">
       {/* Top bar */}
-      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
-        <nav className="flex items-center gap-1">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
+        <nav className="flex flex-wrap items-center gap-1">
           <Link
             href="/products"
             className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -76,8 +76,13 @@ export default async function ProtectedLayout({
             Batches
           </Link>
         </nav>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user.email}</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <span className="hidden max-w-[14rem] truncate text-sm text-muted-foreground sm:inline">
+            {user.email}
+          </span>
+          <span className="truncate text-sm text-muted-foreground sm:hidden">
+            {user.email.split("@")[0]}
+          </span>
           <SignOutButton />
         </div>
       </header>
