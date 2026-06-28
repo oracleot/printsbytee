@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { RecordSaleDialog } from "./record-sale-dialog";
 import { UndoSaleButton } from "./undo-sale-button";
 import { SaleDetails } from "./sale-details";
+import { BatchItemActions } from "./batch-item-actions";
 
 interface BatchItemsTableClientProps {
   items: BatchItem[];
@@ -89,12 +90,15 @@ export function BatchItemsTableClient({ items, salesByItemId = new Map() }: Batc
                   ) : null}
                 </TableCell>
                 <TableCell className="text-right">
-                  {item.status === "sellable" && (
-                    <RecordSaleDialog item={item} />
-                  )}
-                  {item.status === "sold" && sale && (
-                    <UndoSaleButton saleId={sale.id} />
-                  )}
+                  <div className="flex items-center justify-end gap-2">
+                    {item.status === "sellable" && (
+                      <RecordSaleDialog item={item} />
+                    )}
+                    {item.status === "sold" && sale && (
+                      <UndoSaleButton saleId={sale.id} />
+                    )}
+                    <BatchItemActions item={item} />
+                  </div>
                 </TableCell>
               </TableRow>
             );
