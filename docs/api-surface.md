@@ -61,8 +61,8 @@ All endpoints accept and return JSON, except `POST /uploads` which is multipart.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| POST | `/enquiries` | none | Submit a contact-form enquiry. Body: `{ name, email, productId?, message }`. Persists to DB and triggers an email notification via SMTP. |
-| POST | `/waitlist` | none | Join a waitlist. Body: `{ productId, email }`. |
+| POST | `/enquiries` | INTERNAL_API_KEY | Submit a contact-form enquiry. Body: `{ name, email, productId?, message }`. Persists to DB and triggers an email notification via SMTP. Requires `Authorization: Bearer <INTERNAL_API_KEY>` header. Only callable by the website's proxies. |
+| POST | `/waitlist` | INTERNAL_API_KEY | Join a waitlist. Body: `{ productId, email }`. Requires `Authorization: Bearer <INTERNAL_API_KEY>` header. Only callable by the website's proxies. |
 
 ## Uploads
 

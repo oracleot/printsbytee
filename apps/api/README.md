@@ -75,7 +75,7 @@ All vars are loaded and validated by `src/env.ts`. Required vars fail the proces
 | `PORT` | no | Defaults to `3000`. Coerced from string. |
 | `DATABASE_URL` | **yes** | `postgres://` or `postgresql://` URL. |
 | `SESSION_SECRET` | **yes** | Non-empty string. Reserved for future use (e.g. signed CSRF tokens); I20 uses DB-backed sessions so the cookie value itself is the session id. |
-| `INTERNAL_API_KEY` | **yes** | Non-empty string shared with the website/business-app for internal calls. |
+| `INTERNAL_API_KEY` | **yes** | Non-empty string shared with the website/business-app for internal calls. Enforced at runtime on `POST /enquiries` and `POST /waitlist` via the `requireInternalApiKey` middleware (constant-time comparison via `crypto.timingSafeEqual`). Direct public access to those endpoints is blocked; only the website's proxies can submit. |
 | `OWNER_EMAIL` | one-shot | Read by `pnpm create:owner` to seed the single `users` row. Not used at runtime. |
 | `OWNER_PASSWORD` | one-shot | Plaintext password for `create:owner`. Never commit it; clear it from shell history after the script runs. Not used at runtime. |
 | `SMTP_HOST` | no | Used by `POST /enquiries` (issue #16). |
