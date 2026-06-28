@@ -15,6 +15,7 @@
     "prelint": "corepack pnpm@9.0.0 --filter @printsbytee/shared build",
     "lint": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
     "test:sold-item-patch-guard": "tsx --env-file=.env scripts/test-sold-item-patch-guard.ts",
+    "test:internal-api-key": "tsx scripts/test-internal-api-key-middleware.ts",
     "upload:website-images": "tsx scripts/upload-website-images-to-r2.ts",
     "import:products": "tsx scripts/import-products-json.ts",
     "create:owner": "tsx scripts/create-owner-user.ts",

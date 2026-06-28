@@ -6,8 +6,10 @@ import {
   type Enquiry,
 } from '@printsbytee/shared';
 
+import { env } from '../env.js';
 import { db } from '../db/client.js';
 import { enquiries } from '../db/schema/leads.js';
+import { requireInternalApiKey } from '../middleware/requireInternalApiKey.js';
 import { sendEnquiryNotification } from '../services/mail.js';
 
 export const enquiriesApp = new Hono();
@@ -15,7 +17,9 @@ export const enquiriesApp = new Hono();
 /**
  * POST /enquiries — submit a contact-form enquiry.
  *
- * @public — no auth required per docs/api-surface.md.
+ * @internal — requires INTERNAL_API_KEY (Bearer token) in the
+ * Authorization header. Direct public access is blocked; only the
+ * website's proxies (which carry the key) can submit.
  *
  * Body: { name, email, productId?, message }
  * 201: { Enquiry }  — including server-generated id + createdAt
@@ -27,7 +31,7 @@ export const enquiriesApp = new Hono();
  *   throws — a failed send is logged but does not affect the HTTP
  *   response, so the enquiry is durable regardless of mail outcome.
  */
-enquiriesApp.post('/', async (c) => {
+enquiriesApp.post('/', requireInternalApiKey(env.INTERNAL_API_KEY), async (c) => {
   // ── Validate request body ────────────────────────────────────────────────
   // Hono throws a `SyntaxError` from `c.req.json()` when the body is
   // not valid JSON. Surface that as a 400 with the same error envelope

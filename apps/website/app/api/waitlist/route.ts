@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Internal-API-Key": process.env.INTERNAL_API_KEY ?? "",
+        "Authorization": `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
       },
       body: JSON.stringify({ email, productId }),
     });

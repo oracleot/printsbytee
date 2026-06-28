@@ -6,8 +6,10 @@ import {
   WaitlistEntrySchema,
 } from '@printsbytee/shared';
 
+import { env } from '../env.js';
 import { db } from '../db/client.js';
 import { waitlistEntries } from '../db/schema/leads.js';
+import { requireInternalApiKey } from '../middleware/requireInternalApiKey.js';
 
 // Postgres unique-violation error code for the (productId, email) constraint.
 const PG_UNIQUE_VIOLATION = '23505';
@@ -24,14 +26,16 @@ export const waitlistApp = new Hono();
 /**
  * POST /waitlist — join a product waitlist.
  *
- * @public — no auth required per docs/api-surface.md.
+ * @internal — requires INTERNAL_API_KEY (Bearer token) in the
+ * Authorization header. Direct public access is blocked; only the
+ * website's proxies (which carry the key) can submit.
  *
  * Body: { productId: string, email: string }
  * 201: { WaitlistEntry }  — including server-generated id + createdAt
  * 400: { error: { code: "VALIDATION_ERROR", message, details } }
  * 409: { error: { code: "CONFLICT", message } }  — duplicate (productId, email)
  */
-waitlistApp.post('/', async (c) => {
+waitlistApp.post('/', requireInternalApiKey(env.INTERNAL_API_KEY), async (c) => {
   // ── Parse JSON body (gracefully handle malformed input) ─────────────────
   let body: unknown;
   try {
