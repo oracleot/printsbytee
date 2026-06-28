@@ -26,7 +26,7 @@
  * Run:
  *   DATABASE_URL=postgres://test:test@localhost:5432/test \
  *     SESSION_SECRET=test-session \
- *     INTERNAL_API_KEY=super-secret-key \
+ *     INTERNAL_API_KEY=$(openssl rand -hex 32) \
  *     pnpm --filter @printsbytee/api exec tsx scripts/test-internal-api-key-middleware.ts
  *
  * Exit codes:
@@ -38,7 +38,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 
 // Lazy import so env vars are set before the module graph loads env.ts.
-const API_KEY = process.env.INTERNAL_API_KEY ?? 'super-secret-key';
+const API_KEY = process.env.INTERNAL_API_KEY ?? 'a'.repeat(32);
 
 interface TestResponse {
   statusCode: number;
