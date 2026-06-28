@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { requireSession } from '../../middleware/requireSession.js';
 import type { AppEnv } from '../../types.js';
 
+import { getSaleByBatchItem } from './handlers/get-by-batch-item.js';
 import { undoSale } from './handlers/undo.js';
 
 /**
@@ -31,6 +32,7 @@ import { undoSale } from './handlers/undo.js';
  */
 const salesRouter = new Hono<AppEnv>();
 
+salesRouter.get('/by-batch-item/:id', requireSession, getSaleByBatchItem);
 salesRouter.delete('/:id', requireSession, undoSale);
 
 export { salesRouter };

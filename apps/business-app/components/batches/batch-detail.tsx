@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeftIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
-import { BatchItemsTable } from "./batch-items-table";
 import { AddBatchItemsDialog } from "./add-batch-items-dialog";
+import { BatchItemsTableClient } from "./batch-items-table-client";
 
 interface BatchDetailProps {
   batch: ProductionBatchWithTotals;
   items: BatchItem[];
   products: Product[];
+  soldItemIds?: string[];
 }
 
 function formatPrice(pence: number): string {
@@ -32,7 +33,7 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function BatchDetail({ batch, items, products }: BatchDetailProps) {
+export function BatchDetail({ batch, items, products, soldItemIds = [] }: BatchDetailProps) {
   const { productionCost, marketingCost } = batch;
   const totalCost =
     productionCost.materials +
@@ -179,7 +180,7 @@ export function BatchDetail({ batch, items, products }: BatchDetailProps) {
           <AddBatchItemsDialog batchId={batch.id} products={products} />
         </CardHeader>
         <CardContent>
-          <BatchItemsTable items={items} />
+          <BatchItemsTableClient items={items} soldItemIds={soldItemIds} />
         </CardContent>
       </Card>
     </div>

@@ -89,5 +89,16 @@ export default async function BatchDetailPage({ params }: BatchDetailPageProps) 
 
   if (!batch) notFound();
 
-  return <BatchDetail batch={batch} items={items} products={products} />;
+  const soldItemIds = items
+    .filter((item) => item.status === "sold")
+    .map((item) => item.id);
+
+  return (
+    <BatchDetail
+      batch={batch}
+      items={items}
+      products={products}
+      soldItemIds={soldItemIds}
+    />
+  );
 }
