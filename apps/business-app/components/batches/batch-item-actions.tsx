@@ -1,12 +1,17 @@
 "use client";
 
 /**
- * Batch item row actions — mark faulty / remove.
+ * Batch item row actions — mark faulty / revert faulty / remove.
  *
  * Renders as icon buttons in the table actions cell.
- * - "Mark faulty" is always available for non-sold items.
- * - "Remove" is only available for sellable items (not sold).
+ * - "Mark faulty" is available for sellable items only.
+ * - "Revert to sellable" is available for faulty items only.
+ * - "Remove" is only available for sellable items (not sold, not faulty).
  * Uses router.refresh() after mutation to re-fetch data.
+ *
+ * Revert is a one-click action (no confirmation dialog): it is
+ * non-destructive and only restores a previous state, mirroring the
+ * immediate behaviour of Mark faulty itself.
  */
 
 import { useRouter } from "next/navigation";
@@ -21,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangleIcon, Trash2Icon } from "lucide-react";
+import { AlertTriangleIcon, RotateCcwIcon, Trash2Icon } from "lucide-react";
 
 interface BatchItemActionsProps {
   item: BatchItem;
@@ -31,6 +36,8 @@ export function BatchItemActions({ item }: BatchItemActionsProps) {
   const router = useRouter();
   const [faultyLoading, setFaultyLoading] = useState(false);
   const [faultyError, setFaultyError] = useState<string | null>(null);
+  const [revertLoading, setRevertLoading] = useState(false);
+  const [revertError, setRevertError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BatchItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -62,6 +69,33 @@ export function BatchItemActions({ item }: BatchItemActionsProps) {
     setFaultyLoading(false);
   }
 
+  async function revertToSellable() {
+    setRevertLoading(true);
+    setRevertError(null);
+
+    const response = await fetch(`/api/batch-items/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "sellable" }),
+    });
+
+    if (response.ok) {
+      router.refresh();
+      return;
+    }
+
+    if (response.status === 401) {
+      router.push("/login?reason=expired");
+      return;
+    }
+
+    const body = (await response.json().catch(() => ({}))) as {
+      error?: { message?: string };
+    };
+    setRevertError(body.error?.message ?? "Failed to revert item to sellable");
+    setRevertLoading(false);
+  }
+
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleteLoading(true);
@@ -91,7 +125,8 @@ export function BatchItemActions({ item }: BatchItemActionsProps) {
   }
 
   const canRemove = item.status === "sellable";
-  const canMarkFaulty = item.status !== "sold";
+  const canMarkFaulty = item.status === "sellable";
+  const canRevertFaulty = item.status === "faulty";
 
   return (
     <>
@@ -106,6 +141,18 @@ export function BatchItemActions({ item }: BatchItemActionsProps) {
             title="Mark as faulty"
           >
             <AlertTriangleIcon />
+          </Button>
+        )}
+        {canRevertFaulty && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={revertToSellable}
+            disabled={revertLoading}
+            aria-label="Revert to sellable"
+            title="Revert to sellable"
+          >
+            <RotateCcwIcon />
           </Button>
         )}
         {canRemove && (
@@ -124,9 +171,9 @@ export function BatchItemActions({ item }: BatchItemActionsProps) {
         )}
       </div>
 
-      {faultyError && (
+      {(faultyError || revertError) && (
         <p className="mt-1 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs text-destructive">
-          {faultyError}
+          {faultyError ?? revertError}
         </p>
       )}
 
