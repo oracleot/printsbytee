@@ -1,16 +1,20 @@
 /**
  * Batches Summary — displays a list of recent production batches.
+ *
+ * The list is reversed from the API's ascending-by-createdAt order so
+ * the rendered card at the top really is the most recent. Showing 5.
+ *
+ * The "View all" link to /batches is intentionally absent here —
+ * that route is owned by I29 and lives in its own branch. A follow-up
+ * after both PRs merge can wire up the link.
  */
 
-import Link from "next/link";
 import type { ProductionBatch } from "@printsbytee/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRightIcon, PackageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PackageIcon } from "lucide-react";
 
 interface BatchesSummaryProps {
   batches: ProductionBatch[];
-  isLoading?: boolean;
 }
 
 function formatCost(pence: number): string {
@@ -36,40 +40,17 @@ function totalBatchCost(batch: ProductionBatch): number {
   );
 }
 
-export function BatchesSummary({ batches, isLoading }: BatchesSummaryProps) {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Batches</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-16 animate-pulse rounded-lg bg-muted"
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+export function BatchesSummary({ batches }: BatchesSummaryProps) {
+  // API returns oldest-first; reverse to get most-recent-first.
+  const recent = [...batches].reverse().slice(0, 5);
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle>Recent Batches</CardTitle>
-        <Link href="/batches">
-          <Button variant="ghost" size="sm">
-            View all
-            <ArrowRightIcon />
-          </Button>
-        </Link>
       </CardHeader>
       <CardContent>
-        {batches.length === 0 ? (
+        {recent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <PackageIcon className="size-12 text-muted-foreground/40" />
             <p className="mt-3 text-sm text-muted-foreground">
@@ -81,7 +62,7 @@ export function BatchesSummary({ batches, isLoading }: BatchesSummaryProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {batches.slice(0, 5).map((batch) => (
+            {recent.map((batch) => (
               <div
                 key={batch.id}
                 className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-4 transition-colors hover:bg-muted/50"

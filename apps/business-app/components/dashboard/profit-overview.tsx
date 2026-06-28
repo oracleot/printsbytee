@@ -1,12 +1,12 @@
 /**
  * Profit Overview Card — displays aggregate profit metrics.
  *
- * Data is fetched at the page level via the dashboard API route.
+ * Data is fetched and aggregated at the page level (server component).
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUpIcon, TrendingDownIcon, DollarSignIcon } from "lucide-react";
-import type { DashboardTotals } from "@/app/api/dashboard/route";
+import type { DashboardTotals } from "@/lib/dashboard-types";
 
 interface ProfitOverviewProps {
   totals: DashboardTotals;
