@@ -12,7 +12,9 @@ import { batchItems } from '../../../db/schema/batches.js';
 import type { AppEnv } from '../../../types.js';
 
 import {
+  batchItemSoldStatusChangeGuardResponse,
   batchItemStatusSoldGuardResponse,
+  hasSale,
   parseIdParam,
   parseJsonBody,
   toBatchItemDto,
@@ -26,11 +28,13 @@ import {
  * and `updatedAt` — Zod would silently strip them, so we additionally
  * reject them with a 400 to give misbehaving clients a clear signal.
  *
- * The `status: 'sold'` guard is API-layer policy on top of Zod — see
- * `../helpers.ts#batchItemStatusSoldGuardResponse` for rationale.
- * Keeping the policy out of Zod means the `BatchItemStatusSchema`
- * enum remains the source of truth for valid values while the
- * policy lives next to the route.
+ * Two API-layer policy guards on `status` (both on top of Zod):
+ *   1. `batchItemStatusSoldGuardResponse` — refuse `status: 'sold'`;
+ *      the sale endpoint is the only path to mark an item as sold.
+ *   2. `batchItemSoldStatusChangeGuardResponse` — refuse changing
+ *      status *away from* `sold`; undoing a sale must go through
+ *      the dedicated sale-delete endpoint so the `sales` row is also
+ *      removed.
  *
  *   200 { BatchItem }                — updated
  *   400 { error: VALIDATION_ERROR } — malformed id, invalid JSON,
@@ -39,6 +43,8 @@ import {
  *                                      mismatch, or empty body
  *   401 { error: UNAUTHORIZED }     — from requireSession
  *   404 { error: NOT_FOUND }        — id is well-formed but unknown
+ *   409 { error: CONFLICT }         — status change attempted on a
+ *                                      sold item (has a sale row)
  */
 export async function updateBatchItem(c: Context<AppEnv>): Promise<Response> {
   const idResult = parseIdParam(c);
@@ -98,6 +104,39 @@ export async function updateBatchItem(c: Context<AppEnv>): Promise<Response> {
     );
   }
 
+  // 404 first so a non-existent id does not masquerade as a conflict.
+  // Fetch the current row to know its status for the sold-item guard.
+  const [existing] = await db
+    .select({ id: batchItems.id, status: batchItems.status })
+    .from(batchItems)
+    .where(eq(batchItems.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return c.json(
+      ErrorResponseSchema.parse({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Batch item not found',
+        },
+      }),
+      404,
+    );
+  }
+
+  // Guard: refuse changing status away from `sold`. Uses `hasSale` to
+  // detect whether the item has a sale row (the canonical "sold"
+  // signal). Symmetric to the `status: 'sold'` guard above — both
+  // enforce that only the sale endpoint can enter or leave the `sold`
+  // state.
+  if (await hasSale(id)) {
+    const saleGuard = batchItemSoldStatusChangeGuardResponse(
+      parsed.data,
+      existing.status,
+    );
+    if (saleGuard !== null) return saleGuard;
+  }
+
   // After both guards, an empty body would result in a no-op UPDATE
   // that does not even bump `updatedAt`. Reject it as a 400 so the
   // client gets a clear signal instead of a misleading 200.
@@ -121,18 +160,6 @@ export async function updateBatchItem(c: Context<AppEnv>): Promise<Response> {
     .set({ ...parsed.data, updatedAt: new Date() })
     .where(eq(batchItems.id, id))
     .returning();
-
-  if (!row) {
-    return c.json(
-      ErrorResponseSchema.parse({
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Batch item not found',
-        },
-      }),
-      404,
-    );
-  }
 
   return c.json(BatchItemSchema.parse(toBatchItemDto(row)), 200);
 }
