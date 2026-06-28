@@ -122,39 +122,39 @@ export function BatchFormFields({ form }: BatchFormFieldsProps) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <CostField
-            label="Materials"
+            label="Materials (pence)"
             id="materials"
             value={watchProductionCost.materials}
             onChange={(val) => setCostField("materials", val)}
             error={errors.productionCost?.materials?.message}
-            description="Fabric, ink, packaging materials"
+            description="Enter amount in pence (e.g. 4000 for £40.00)"
           />
 
           <CostField
-            label="Logistics"
+            label="Logistics (pence)"
             id="logistics"
             value={watchProductionCost.logistics}
             onChange={(val) => setCostField("logistics", val)}
             error={errors.productionCost?.logistics?.message}
-            description="Shipping, handling, storage"
+            description="Enter amount in pence (e.g. 2000 for £20.00)"
           />
 
           <CostField
-            label="Salary"
+            label="Salary (pence)"
             id="salary"
             value={watchProductionCost.salary}
             onChange={(val) => setCostField("salary", val)}
             error={errors.productionCost?.salary?.message}
-            description="Labor costs for production"
+            description="Enter amount in pence (e.g. 15000 for £150.00)"
           />
 
           <CostField
-            label="Other"
+            label="Other (pence)"
             id="other"
             value={watchProductionCost.other}
             onChange={(val) => setCostField("other", val)}
             error={errors.productionCost?.other?.message}
-            description="Miscellaneous production costs"
+            description="Enter amount in pence (e.g. 500 for £5.00)"
           />
         </div>
 
@@ -169,12 +169,12 @@ export function BatchFormFields({ form }: BatchFormFieldsProps) {
       {/* Marketing Cost */}
       <div className="space-y-4">
         <CostField
-          label="Marketing cost"
+          label="Marketing cost (pence)"
           id="marketingCost"
           value={watchMarketingCost}
           onChange={setMarketingCost}
           error={errors.marketingCost?.message}
-          description="Advertising, promotions, and marketing expenses"
+          description="Enter amount in pence (e.g. 3000 for £30.00)"
         />
       </div>
 
