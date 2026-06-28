@@ -13,6 +13,7 @@ import { getR2Config } from '../../../services/r2.js';
 import type { AppEnv } from '../../../types.js';
 
 import {
+  badMagicResponse,
   fileRequiredResponse,
   payloadTooLargeResponse,
   r2UnconfiguredResponse,
@@ -169,6 +170,7 @@ export async function createUpload(c: Context<AppEnv>): Promise<Response> {
   }
   if (outcome.kind === 'no-file') return fileRequiredResponse();
   if (outcome.kind === 'bad-type') return unsupportedMediaTypeResponse();
+  if (outcome.kind === 'bad-magic') return badMagicResponse();
   if (outcome.kind === 'too-large') return payloadTooLargeResponse();
   if (outcome.kind === 'success') {
     return c.json(

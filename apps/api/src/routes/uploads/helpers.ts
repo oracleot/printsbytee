@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Transform } from 'node:stream';
+import { Transform, type Readable } from 'node:stream';
+import { fileTypeFromBuffer } from 'file-type';
 
 /**
  * Constants + pure helpers for `POST /uploads` (I22).
@@ -35,23 +36,10 @@ export const UPLOAD_R2_UNCONFIGURED_MESSAGE =
   'R2 uploads are not configured on this environment; set the R2_* env vars to enable them';
 
 // ── Limits ─────────────────────────────────────────────────────────────
-//
-// Hard 10 MB cap. Pinned here so a future change to the cap is a
-// one-line edit; the route handler reads the constant via the
-// `import { UPLOAD_MAX_BYTES }` line below. Mirrors the pattern in
-// `apps/api/src/routes/sales/_shared/sale-helpers.ts` (message
-// constants + pure helpers in one file).
 
 export const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 
 // ── Content-type allowlist ────────────────────────────────────────────
-//
-// The website currently serves JPG / PNG / WebP / AVIF — pinning the
-// route to those four types keeps the bucket tidy and stops an
-// attacker from uploading arbitrary blobs to a public R2 bucket
-// (e.g. `application/zip`, `text/html`, `application/octet-stream`).
-// Extending the list later means editing this constant; that
-// intentional friction is the point.
 
 export const UPLOAD_ALLOWED_CONTENT_TYPES: ReadonlyArray<string> = [
   'image/jpeg',
@@ -67,68 +55,125 @@ const EXTENSION_BY_CONTENT_TYPE: Readonly<Record<string, string>> = {
   'image/avif': 'avif',
 };
 
-/** Lowercase + trim before allowlist check so a noisy client sending
- *  `Image/JPEG ` still passes — MIME types are case-insensitive per
- *  RFC 9110 §8.3.1. */
 export function isAllowedContentType(contentType: string | undefined): boolean {
   if (!contentType) return false;
   const normalised = contentType.trim().toLowerCase();
   return UPLOAD_ALLOWED_CONTENT_TYPES.includes(normalised);
 }
 
-/** Map an allowlisted MIME type to the file extension used in the
- *  generated object key. Undefined for non-allowlisted types — the
- *  caller must check `isAllowedContentType` first. */
 export function extensionForContentType(contentType: string): string | undefined {
   return EXTENSION_BY_CONTENT_TYPE[contentType.trim().toLowerCase()];
 }
 
-/** Build the object key for a new upload. The `uploads/` prefix lets
- *  the bucket be partitioned later (e.g. `uploads/products/`,
- *  `uploads/website/`) without rewriting historical rows — every key
- *  ever written by this code starts with `uploads/`. */
 export function buildUploadKey(contentType: string): string {
   const ext = extensionForContentType(contentType);
-  // `isAllowedContentType` is the route-layer guard; defensive
-  // fallback here so a mis-call cannot silently produce a key with
-  // no extension (which would break CDN content-negotiation for
-  // image/* types).
   if (!ext) {
     throw new Error(`Refusing to build key for non-allowlisted content type: ${contentType}`);
   }
   return `uploads/${randomUUID()}.${ext}`;
 }
 
-/** Canonicalise the client-supplied MIME type for the wire response
- *  and for the S3 `ContentType` header — same lowercased form used by
- *  the allowlist. Centralising it keeps the response and the S3
- *  metadata in lockstep. */
 export function canonicaliseContentType(contentType: string): string {
   return contentType.trim().toLowerCase();
 }
 
+// ── Magic-byte sniffing ────────────────────────────────────────────────
+
+/** Number of bytes to read from the start of the file for sniffing. */
+export const SNIFF_BYTES = 4 * 1024;
+
+/**
+ * Detect the MIME type of a buffer by inspecting magic bytes.
+ * Returns `undefined` when the content type cannot be determined.
+ *
+ * Used as a defence-in-depth layer: even when a client sends the
+ * correct `Content-Type` header, the actual bytes are validated
+ * against the allowlist to stop polyglot-file attacks (e.g. a ZIP
+ * file renamed to .png).
+ */
+export async function sniffContentType(
+  bytes: Uint8Array,
+): Promise<string | undefined> {
+  const result = await fileTypeFromBuffer(bytes);
+  return result?.mime;
+}
+
+/**
+ * Streaming transform that intercepts the first `targetSize` bytes
+ * for magic-byte sniffing, then forwards all bytes downstream
+ * unchanged.
+ *
+ * Usage:
+ *   const sniffer = new MagicByteSniffer(SNIFF_BYTES, async (mime) => {
+ *     // Validate mime against allowlist; reject if not allowed.
+ *   });
+ *   fileStream.pipe(sniffer).pipe(counter).pipe(s3Upload);
+ *
+ * The callback fires exactly once, after enough bytes have been
+ * accumulated (or end of stream). The bytes accumulated so far are
+ * forwarded downstream immediately after the callback fires so the
+ * S3 upload receives a complete stream.
+ *
+ * The callback is async so callers can `await` the sniff result
+ * before deciding whether to abort the upload pipeline.
+ */
+export class MagicByteSniffer extends Transform {
+  private readonly targetSize: number;
+  private readonly onResult: (mime: string | undefined) => Promise<void>;
+  private buffer = Buffer.alloc(0);
+  private sniffing = true;
+  private emitted = false;
+
+  constructor(
+    targetSize: number,
+    onResult: (mime: string | undefined) => Promise<void>,
+  ) {
+    super();
+    this.targetSize = targetSize;
+    this.onResult = onResult;
+  }
+
+  override _transform(
+    chunk: Buffer,
+    _encoding: BufferEncoding,
+    callback: (error?: Error | null, data?: Buffer) => void,
+  ): void {
+    if (this.sniffing) {
+      this.buffer = Buffer.concat([this.buffer, chunk]);
+      if (this.buffer.length >= this.targetSize) {
+        this.sniffing = false;
+        void this.runSniff().then(() => callback(), callback);
+        return;
+      }
+      callback();
+    } else {
+      this.push(chunk);
+      callback();
+    }
+  }
+
+  override _flush(callback: (error?: Error | null) => void): void {
+    if (this.sniffing && this.buffer.length > 0) {
+      this.sniffing = false;
+      void this.runSniff().then(() => callback(), callback);
+    } else {
+      callback();
+    }
+  }
+
+  private async runSniff(): Promise<void> {
+    if (this.emitted) return;
+    this.emitted = true;
+    const mime = await sniffContentType(this.buffer);
+    // Forward accumulated bytes before invoking callback so S3
+    // receives the stream prefix without waiting for validation.
+    this.push(this.buffer);
+    await this.onResult(mime);
+  }
+}
+
 // ── Streaming size guard ───────────────────────────────────────────────
-//
-// We enforce the 10 MB cap via a counting `Transform` that wraps the
-// busboy file stream. The wrapper has two jobs:
-//   1. As chunks flow from busboy (the parser) into S3 (the sink),
-//      count their bytes.
-//   2. Surface the total as `bytes` after the stream is fully
-//      consumed.
-//
-// Why a Transform instead of inspecting the request's `Content-Length`:
-//   - Multipart bodies wrap the file in envelope data (boundaries,
-//     headers, etc.), so the request-level `Content-Length` is
-//     strictly larger than the file's byte length.
-//   - We deliberately don't use busboy's `fileSize` limit alone for
-//     counting: the wire response should carry the actual byte
-//     length, not just whether the file fit under the cap. Counting
-//     as the bytes flow lets us return that value without buffering
-//     the file in memory.
-//
-// The counter increments before `push()`, so even if S3 aborts the
-// upload partway through the count is still accurate to what left
-// the parser.
+
 export class ByteCountingStream extends Transform {
   bytes = 0;
 
@@ -138,8 +183,6 @@ export class ByteCountingStream extends Transform {
     callback: (error?: Error | null, data?: Buffer) => void,
   ): void {
     this.bytes += chunk.length;
-    // Forward the chunk unchanged so S3 still sees the original
-    // bytes; we are a pure counter, not a transformer.
     this.push(chunk);
     callback();
   }

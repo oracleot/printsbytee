@@ -30,6 +30,23 @@ export function fileRequiredResponse(): Response {
   );
 }
 
+export const UPLOAD_BAD_MAGIC_MESSAGE =
+  'File content type does not match its actual format';
+
+export function badMagicResponse(): Response {
+  return new Response(
+    JSON.stringify(
+      ErrorResponseSchema.parse({
+        error: {
+          code: 'UNSUPPORTED_MEDIA_TYPE',
+          message: UPLOAD_BAD_MAGIC_MESSAGE,
+        },
+      }),
+    ),
+    { status: 415, headers: { 'content-type': 'application/json' } },
+  );
+}
+
 export function unsupportedMediaTypeResponse(): Response {
   return new Response(
     JSON.stringify(
