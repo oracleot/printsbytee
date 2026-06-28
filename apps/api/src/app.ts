@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { HealthResponseSchema, type HealthResponse } from '@printsbytee/shared';
 
 import { env } from './env.js';
@@ -21,6 +22,12 @@ import { routes } from './routes/index.js';
  *   Without `app.onError`, an unhandled throw would fall off the
  *   documented envelope and surface Hono's default text response,
  *   which downstream consumers are not built to parse.
+ */
+/**
+ * Body-size limits are applied per-route via `bodyLimit({ maxSize: N })`
+ * in the route registration. Tight caps on JSON writes (products/batches/auth)
+ * prevent OOM from a malicious or buggy client. `POST /uploads` is exempt —
+ * busboy enforces 10 MB internally via `fileSize`.
  */
 export const app = new Hono();
 
@@ -59,6 +66,13 @@ app.notFound((c) => {
  * so the developer still gets a useful signal in logs and on the wire.
  */
 app.onError((err, c) => {
+  // Pass Hono HTTPExceptions through with their declared status and
+  // response — this preserves behaviour for bodyLimit (413), rate-limit
+  // (429), and any other thrown Hono-level responses.
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+
   // Log the full error server-side for observability, but return a
   // generic message to the client to avoid leaking internals.
   // eslint-disable-next-line no-console

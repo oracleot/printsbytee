@@ -16,13 +16,15 @@ import {
   buildUploadKey,
   canonicaliseContentType,
   isAllowedContentType,
+  MagicByteSniffer,
+  SNIFF_BYTES,
 } from './helpers.js';
 
 /**
  * Internal orchestration for the `POST /uploads` route: wire busboy
  * to the S3 `Upload` and resolve once the FIRST terminal outcome
- * (success, parse error, missing file, bad content-type, oversize,
- * or multi-file) has been observed.
+ * (success, parse error, missing file, bad content-type, bad-magic,
+ * oversize, or multi-file) has been observed.
  *
  * Split out from `handlers/create.ts` so the handler body stays
  * focused on the wire shape and the orchestration here can be
@@ -30,16 +32,21 @@ import {
  * file is `POST /uploads`-specific; nothing is exported to other
  * modules.
  *
- * Why a Promise rather than streaming-style callbacks: every outcome
- * settles exactly once, the inner code reads linearly, and the
- * caller `await`s a discriminated union — TypeScript narrows the
- * rest of the handler without nested `if` ladders.
+ * Magic-byte sniffing:
+ *   After the multipart Content-Type header passes the allowlist
+ *   check, a `MagicByteSniffer` Transform reads the first
+ *   `SNIFF_BYTES` of the file stream and passes them to
+ *   `fileTypeFromBuffer`. The sniffed type is compared against the
+ *   allowlist. If it doesn't match (or is unknown/undefined), the
+ *   upload is rejected with 415 even if the `Content-Type` header
+ *   was valid. This closes the polyglot-file attack vector.
  */
 
 export type UploadOutcome =
   | { kind: 'success'; response: UploadResponse }
   | { kind: 'no-file' }
   | { kind: 'bad-type'; contentType: string }
+  | { kind: 'bad-magic'; detectedMime: string | undefined }
   | { kind: 'too-large' }
   | { kind: 'multi-file' }
   | { kind: 'parse-error'; message: string };
@@ -53,9 +60,6 @@ export async function runUpload(
 ): Promise<UploadOutcome> {
   return new Promise<UploadOutcome>((resolve, reject) => {
     let fileSeen = 0;
-    // `settled` guards against double-resolve. busboy can fire both
-    // `close` (drain complete) and `error` for malformed envelopes;
-    // the first terminal event wins.
     let settled = false;
 
     const settle = (outcome: UploadOutcome): void => {
@@ -67,9 +71,6 @@ export async function runUpload(
     busboy.on('file', (_fieldName: string, fileStream: Readable, info: Busboy.FileInfo) => {
       fileSeen += 1;
       if (fileSeen > 1) {
-        // Drain the extra stream so busboy still completes, but
-        // reject the request as malformed (the contract is exactly
-        // one file part).
         fileStream.resume();
         settle({ kind: 'multi-file' });
         return;
@@ -77,7 +78,6 @@ export async function runUpload(
 
       const rawType = info.mimeType;
       if (!isAllowedContentType(rawType)) {
-        // Drain so busboy advances; map to 415 in the caller.
         fileStream.resume();
         settle({ kind: 'bad-type', contentType: rawType });
         return;
@@ -85,24 +85,27 @@ export async function runUpload(
 
       const contentType = canonicaliseContentType(rawType);
 
-      // Count bytes as the file flows from busboy into S3.
+      // Pipeline: fileStream → sniffer → counter → S3
       const counter = new ByteCountingStream();
-      fileStream.pipe(counter);
+      const sniffer = new MagicByteSniffer(SNIFF_BYTES, async (sniffedMime: string | undefined) => {
+        if (!isAllowedContentType(sniffedMime)) {
+          // Sniff failed: unknown type or type not in allowlist.
+          // Drain the remainder of the file stream so busboy completes.
+          fileStream.resume();
+          settle({ kind: 'bad-magic', detectedMime: sniffedMime });
+        }
+      });
 
       // busboy emits `limit` when the fileSize cap is hit.
-      // The counter still sees every byte busboy emitted; S3
-      // receives less than `UPLOAD_MAX_BYTES` because busboy
-      // stopped producing. We translate that to 413.
       fileStream.on('limit', () => {
         settle({ kind: 'too-large' });
       });
 
+      fileStream.pipe(sniffer).pipe(counter);
+
       const client = createR2Client(r2Config);
       const key = buildUploadKey(contentType);
 
-      // Drive the S3 upload. A failure here rejects the outer
-      // promise, which the handler re-throws into the global
-      // error path (500 INTERNAL_ERROR).
       uploadObject(client, r2Config.bucket, key, contentType, counter)
         .then(() => {
           settle({
@@ -110,11 +113,6 @@ export async function runUpload(
             response: {
               url: joinPublicUrl(r2Config.publicBaseUrl, key),
               contentType,
-              // Counter increments before `push()`, so `bytes` is
-              // accurate to what busboy emitted — i.e. what S3
-              // stored. For a `truncated` upload this is below
-              // `UPLOAD_MAX_BYTES`, but the `limit` handler
-              // already short-circuited that case to 413.
               size: counter.bytes,
             },
           });
@@ -125,8 +123,6 @@ export async function runUpload(
     });
 
     busboy.on('close', () => {
-      // The entire body has been consumed. If no `file` event fired,
-      // the client sent a multipart envelope without a `file` part.
       if (fileSeen === 0) {
         settle({ kind: 'no-file' });
       }
@@ -139,9 +135,6 @@ export async function runUpload(
       });
     });
 
-    // Pipe errors (e.g. client disconnects mid-upload) reject the
-    // outer promise so the handler re-throws into the global error
-    // path (500).
     body.on('error', (err: unknown) => {
       reject(err instanceof Error ? err : new Error(String(err)));
     });

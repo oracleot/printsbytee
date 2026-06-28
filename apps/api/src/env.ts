@@ -52,7 +52,15 @@ const EnvSchema = z.object({
 
   INTERNAL_API_KEY: z
     .string()
-    .min(1, 'INTERNAL_API_KEY is required')
+    .min(32, 'INTERNAL_API_KEY must be at least 32 characters')
+    .max(256, 'INTERNAL_API_KEY must be 256 characters or fewer')
+    // NOTE: If you are rotating the key, generate a new one with:
+    //   openssl rand -hex 32   # produces a 64-char hex string
+    // Then update INTERNAL_API_KEY in all three environments:
+    //   Railway (API service)
+    //   Vercel (website project)
+    //   Vercel (business-app project)
+    // and verify all three consumers can still call the API.
     .refine((v) => v.trim().length > 0, 'INTERNAL_API_KEY must not be blank'),
 
   // Optional — used by POST /enquiries (issue #16). `SMTP_USER` is

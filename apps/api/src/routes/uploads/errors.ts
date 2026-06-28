@@ -20,54 +20,66 @@ import {
  */
 
 export function fileRequiredResponse(): Response {
+  const body = ErrorResponseSchema.safeParse({
+    error: { code: 'VALIDATION_ERROR', message: UPLOAD_FILE_REQUIRED_MESSAGE },
+  });
   return new Response(
-    JSON.stringify(
-      ErrorResponseSchema.parse({
-        error: { code: 'VALIDATION_ERROR', message: UPLOAD_FILE_REQUIRED_MESSAGE },
-      }),
-    ),
+    JSON.stringify(body.success ? body.data : { error: { code: 'VALIDATION_ERROR', message: UPLOAD_FILE_REQUIRED_MESSAGE } }),
     { status: 400, headers: { 'content-type': 'application/json' } },
   );
 }
 
-export function unsupportedMediaTypeResponse(): Response {
+export const UPLOAD_BAD_MAGIC_MESSAGE =
+  'File content type does not match its actual format';
+
+export function badMagicResponse(): Response {
+  const body = ErrorResponseSchema.safeParse({
+    error: {
+      code: 'UNSUPPORTED_MEDIA_TYPE',
+      message: UPLOAD_BAD_MAGIC_MESSAGE,
+    },
+  });
   return new Response(
-    JSON.stringify(
-      ErrorResponseSchema.parse({
-        error: {
-          code: 'UNSUPPORTED_MEDIA_TYPE',
-          message: UPLOAD_CONTENT_TYPE_NOT_ALLOWED_MESSAGE,
-        },
-      }),
-    ),
+    JSON.stringify(body.success ? body.data : { error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: UPLOAD_BAD_MAGIC_MESSAGE } }),
+    { status: 415, headers: { 'content-type': 'application/json' } },
+  );
+}
+
+export function unsupportedMediaTypeResponse(): Response {
+  const body = ErrorResponseSchema.safeParse({
+    error: {
+      code: 'UNSUPPORTED_MEDIA_TYPE',
+      message: UPLOAD_CONTENT_TYPE_NOT_ALLOWED_MESSAGE,
+    },
+  });
+  return new Response(
+    JSON.stringify(body.success ? body.data : { error: { code: 'UNSUPPORTED_MEDIA_TYPE', message: UPLOAD_CONTENT_TYPE_NOT_ALLOWED_MESSAGE } }),
     { status: 415, headers: { 'content-type': 'application/json' } },
   );
 }
 
 export function payloadTooLargeResponse(): Response {
+  const body = ErrorResponseSchema.safeParse({
+    error: {
+      code: 'PAYLOAD_TOO_LARGE',
+      message: UPLOAD_TOO_LARGE_MESSAGE,
+    },
+  });
   return new Response(
-    JSON.stringify(
-      ErrorResponseSchema.parse({
-        error: {
-          code: 'PAYLOAD_TOO_LARGE',
-          message: UPLOAD_TOO_LARGE_MESSAGE,
-        },
-      }),
-    ),
+    JSON.stringify(body.success ? body.data : { error: { code: 'PAYLOAD_TOO_LARGE', message: UPLOAD_TOO_LARGE_MESSAGE } }),
     { status: 413, headers: { 'content-type': 'application/json' } },
   );
 }
 
 export function r2UnconfiguredResponse(): Response {
+  const body = ErrorResponseSchema.safeParse({
+    error: {
+      code: 'SERVICE_UNAVAILABLE',
+      message: UPLOAD_R2_UNCONFIGURED_MESSAGE,
+    },
+  });
   return new Response(
-    JSON.stringify(
-      ErrorResponseSchema.parse({
-        error: {
-          code: 'SERVICE_UNAVAILABLE',
-          message: UPLOAD_R2_UNCONFIGURED_MESSAGE,
-        },
-      }),
-    ),
+    JSON.stringify(body.success ? body.data : { error: { code: 'SERVICE_UNAVAILABLE', message: UPLOAD_R2_UNCONFIGURED_MESSAGE } }),
     { status: 503, headers: { 'content-type': 'application/json' } },
   );
 }

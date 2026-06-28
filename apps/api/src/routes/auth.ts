@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { eq } from 'drizzle-orm';
 
 import {
@@ -14,6 +15,7 @@ import { users } from '../db/schema/auth.js';
 import type { AppEnv } from '../types.js';
 import { requireSession } from '../middleware/requireSession.js';
 import { verifyPassword } from '../services/passwords.js';
+import { rateLimitLogin } from '../middleware/rateLimitLogin.js';
 import {
   clearSessionCookie,
   createSession,
@@ -77,7 +79,7 @@ function toUserDto(row: { id: string; email: string; createdAt: Date }): User {
 
 // ── POST /auth/login ────────────────────────────────────────────────────
 
-authApp.post('/login', async (c) => {
+authApp.post('/login', bodyLimit({ maxSize: 8 * 1024 }), rateLimitLogin, async (c) => {
   // ── Parse body ────────────────────────────────────────────────────────
   // Hono throws a `SyntaxError` from `c.req.json()` when the body is
   // not valid JSON. Surface that as a 400 with the same envelope the

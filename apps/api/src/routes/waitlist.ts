@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 
 import {
   CreateWaitlistRequestSchema,
@@ -35,7 +36,7 @@ export const waitlistApp = new Hono();
  * 400: { error: { code: "VALIDATION_ERROR", message, details } }
  * 409: { error: { code: "CONFLICT", message } }  — duplicate (productId, email)
  */
-waitlistApp.post('/', requireInternalApiKey(env.INTERNAL_API_KEY), async (c) => {
+waitlistApp.post('/', bodyLimit({ maxSize: 64 * 1024 }), requireInternalApiKey(env.INTERNAL_API_KEY), async (c) => {
   // ── Parse JSON body (gracefully handle malformed input) ─────────────────
   let body: unknown;
   try {

@@ -14,7 +14,7 @@ export const CreateEnquiryRequestSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   productId: uuidSchema.optional(),
-  message: z.string().min(1),
+  message: z.string().min(1).max(2000, 'Message must be 2000 characters or fewer'),
 });
 
 export const WaitlistEntrySchema = z.object({
