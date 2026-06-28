@@ -43,7 +43,7 @@ export const CreateBatchItemRequestSchema = z.object({
 });
 
 export const CreateBatchItemsBulkRequestSchema = z.object({
-  items: z.array(CreateBatchItemRequestSchema).min(1),
+  items: z.array(CreateBatchItemRequestSchema).min(1).max(1000, 'Bulk import limited to 1000 items per request'),
 });
 
 export const UpdateBatchItemRequestSchema = BatchItemSchema.pick({

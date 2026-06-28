@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { HealthResponseSchema, type HealthResponse } from '@printsbytee/shared';
 
 import { env } from './env.js';
@@ -22,7 +23,23 @@ import { routes } from './routes/index.js';
  *   documented envelope and surface Hono's default text response,
  *   which downstream consumers are not built to parse.
  */
+/**
+ * Global body-size cap: 500 KB per request.
+ *
+ * The `bodyLimit` middleware returns 413 `PAYLOAD_TOO_LARGE`
+ * automatically when the raw body exceeds this limit before any
+ * handler runs. Per-route tighter limits (e.g. 256 KB for product
+ * writes) are applied inline in the route handlers.
+ *
+ * Conservative starting point. Raise if real payloads approach the
+ * cap; note that any raise must be accompanied by a review of the
+ * busboy `fileSize` limit in `routes/uploads/handlers/create.ts`.
+ */
 export const app = new Hono();
+
+// Global body limit — applied before every route handler.
+// 500 KB = 500 * 1024 bytes. Hono returns 413 automatically on overflow.
+app.use(bodyLimit({ maxSize: 500 * 1024 }));
 
 app.get('/health', (c) => {
   // Parse through the shared schema so the response shape is enforced

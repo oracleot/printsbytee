@@ -14,8 +14,8 @@ export const SaleSchema = z.object({
 export const RecordSaleRequestSchema = z.object({
   salePrice: penceSchema.optional(),
   soldAt: isoTimestampSchema.optional(),
-  customerName: z.string().optional(),
-  customerContact: z.string().optional(),
+  customerName: z.string().max(200, 'customerName must be 200 characters or fewer').optional(),
+  customerContact: z.string().max(200, 'customerContact must be 200 characters or fewer').optional(),
 });
 
 export type Sale = z.infer<typeof SaleSchema>;
