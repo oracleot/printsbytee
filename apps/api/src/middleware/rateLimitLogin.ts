@@ -124,15 +124,13 @@ export const rateLimitLogin = createMiddleware<AppEnv>(async (c, next) => {
   if (!allowed) {
     const retryAfter = secondsUntilRetry(ip);
     await c.header('Retry-After', String(retryAfter));
-    return c.json(
-      ErrorResponseSchema.parse({
-        error: {
-          code: 'TOO_MANY_REQUESTS',
-          message: 'Too many login attempts. Please try again later.',
-        },
-      }),
-      429,
-    );
+    const body = ErrorResponseSchema.safeParse({
+      error: {
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Too many login attempts. Please try again later.',
+      },
+    });
+    return c.json(body.success ? body.data : { error: { code: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' } }, 429);
   }
 
   await next();

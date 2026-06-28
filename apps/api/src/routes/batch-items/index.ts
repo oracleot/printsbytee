@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 
 import { requireSession } from '../../middleware/requireSession.js';
 import type { AppEnv } from '../../types.js';
@@ -48,6 +49,6 @@ const batchItemsRouter = new Hono<AppEnv>();
 
 batchItemsRouter.patch('/:id', requireSession, updateBatchItem);
 batchItemsRouter.delete('/:id', requireSession, deleteBatchItem);
-batchItemsRouter.post('/:id/sale', requireSession, recordBatchItemSale);
+batchItemsRouter.post('/:id/sale', bodyLimit({ maxSize: 256 * 1024 }), requireSession, recordBatchItemSale);
 
 export { batchItemsRouter };

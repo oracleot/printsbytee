@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
+import { HTTPException } from 'hono/http-exception';
 import { HealthResponseSchema, type HealthResponse } from '@printsbytee/shared';
 
 import { env } from './env.js';
@@ -24,22 +24,12 @@ import { routes } from './routes/index.js';
  *   which downstream consumers are not built to parse.
  */
 /**
- * Global body-size cap: 500 KB per request.
- *
- * The `bodyLimit` middleware returns 413 `PAYLOAD_TOO_LARGE`
- * automatically when the raw body exceeds this limit before any
- * handler runs. Per-route tighter limits (e.g. 256 KB for product
- * writes) are applied inline in the route handlers.
- *
- * Conservative starting point. Raise if real payloads approach the
- * cap; note that any raise must be accompanied by a review of the
- * busboy `fileSize` limit in `routes/uploads/handlers/create.ts`.
+ * Body-size limits are applied per-route via `bodyLimit({ maxSize: N })`
+ * in the route registration. Tight caps on JSON writes (products/batches/auth)
+ * prevent OOM from a malicious or buggy client. `POST /uploads` is exempt —
+ * busboy enforces 10 MB internally via `fileSize`.
  */
 export const app = new Hono();
-
-// Global body limit — applied before every route handler.
-// 500 KB = 500 * 1024 bytes. Hono returns 413 automatically on overflow.
-app.use(bodyLimit({ maxSize: 500 * 1024 }));
 
 app.get('/health', (c) => {
   // Parse through the shared schema so the response shape is enforced
@@ -76,6 +66,13 @@ app.notFound((c) => {
  * so the developer still gets a useful signal in logs and on the wire.
  */
 app.onError((err, c) => {
+  // Pass Hono HTTPExceptions through with their declared status and
+  // response — this preserves behaviour for bodyLimit (413), rate-limit
+  // (429), and any other thrown Hono-level responses.
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+
   // Log the full error server-side for observability, but return a
   // generic message to the client to avoid leaking internals.
   // eslint-disable-next-line no-console

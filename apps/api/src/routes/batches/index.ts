@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 
 import { requireSession } from '../../middleware/requireSession.js';
 import type { AppEnv } from '../../types.js';
@@ -69,16 +70,16 @@ import { listBatchItems } from '../batch-items/handlers/list.js';
 const batchesRouter = new Hono<AppEnv>();
 
 batchesRouter.get('/', requireSession, listBatches);
-batchesRouter.post('/', requireSession, createBatch);
+batchesRouter.post('/', bodyLimit({ maxSize: 256 * 1024 }), requireSession, createBatch);
 batchesRouter.get('/:id', requireSession, getBatchById);
-batchesRouter.patch('/:id', requireSession, updateBatch);
+batchesRouter.patch('/:id', bodyLimit({ maxSize: 256 * 1024 }), requireSession, updateBatch);
 batchesRouter.delete('/:id', requireSession, deleteBatch);
 
 // Batch-scoped batch-item routes (I24). The `:id` here is the batch
 // id, not the item id — same shape as the existing `/batches/:id`
 // routes. Mounted inline so the path stays grouped under one router.
 batchesRouter.get('/:id/items', requireSession, listBatchItems);
-batchesRouter.post('/:id/items', requireSession, createBatchItems);
+batchesRouter.post('/:id/items', bodyLimit({ maxSize: 1024 * 1024 }), requireSession, createBatchItems);
 
 // Batch-scoped sales (I32) — replaces the N+1 /sales/by-batch-item/:id fetches.
 batchesRouter.get('/:id/sales', requireSession, getBatchSales);

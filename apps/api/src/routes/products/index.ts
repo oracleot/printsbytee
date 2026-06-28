@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 
 import { requireSession } from '../../middleware/requireSession.js';
 import type { AppEnv } from '../../types.js';
@@ -46,8 +47,8 @@ const productsRouter = new Hono<AppEnv>();
 productsRouter.get('/', listProducts);
 productsRouter.get('/:slug', getProductBySlug);
 
-productsRouter.post('/', requireSession, createProduct);
-productsRouter.patch('/:id', requireSession, updateProduct);
+productsRouter.post('/', bodyLimit({ maxSize: 256 * 1024 }), requireSession, createProduct);
+productsRouter.patch('/:id', bodyLimit({ maxSize: 256 * 1024 }), requireSession, updateProduct);
 productsRouter.delete('/:id', requireSession, deleteProduct);
 
 export { productsRouter };

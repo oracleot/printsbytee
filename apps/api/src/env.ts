@@ -59,7 +59,7 @@ const EnvSchema = z.object({
     // Then update INTERNAL_API_KEY in all three environments:
     //   Railway (API service)
     //   Vercel (website project)
- //   Vercel (business-app project)
+    //   Vercel (business-app project)
     // and verify all three consumers can still call the API.
     .refine((v) => v.trim().length > 0, 'INTERNAL_API_KEY must not be blank'),
 
