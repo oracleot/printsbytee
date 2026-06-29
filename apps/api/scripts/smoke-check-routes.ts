@@ -20,8 +20,8 @@
  *
  * Usage:
  *   DATABASE_URL=postgres://test:test@localhost:5432/test \
- *     SESSION_SECRET=test-session-secret \
- *     INTERNAL_API_KEY=test-internal-key \
+ *     SESSION_SECRET=ci-test-session-secret-placeholder-32chars \
+ *     INTERNAL_API_KEY=ci-internal-api-key-placeholder-32chars \
  *     pnpm --filter @printsbytee/api exec tsx scripts/smoke-check-routes.ts
  */
 import { app } from '../src/app.js';
